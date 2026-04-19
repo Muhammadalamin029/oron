@@ -11,7 +11,7 @@ import { toast } from "sonner"
 import { Eye, EyeOff, Watch } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
@@ -176,6 +176,14 @@ export default function LoginPage() {
         </div>
       </div>
       </div>
+    </Suspense>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
     </Suspense>
   )
 }

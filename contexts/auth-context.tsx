@@ -24,7 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token on mount
+    // Check for existing token on mount (only on client side)
+    if (typeof window === 'undefined') return;
+    
     const storedToken = localStorage.getItem('access_token');
     const storedRefreshToken = localStorage.getItem('refresh_token');
     if (storedToken) {
@@ -56,6 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const onLogout = () => {
       setUser(null);
       setToken(null);
@@ -76,8 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authResponse: AuthResponse = await authApi.login({ email, password });
       setUser(authResponse.user);
       setToken(authResponse.access_token);
-      localStorage.setItem('access_token', authResponse.access_token);
-      localStorage.setItem('refresh_token', authResponse.refresh_token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', authResponse.access_token);
+        localStorage.setItem('refresh_token', authResponse.refresh_token);
+      }
       return authResponse.user;
     } catch (error) {
       throw error;
@@ -100,8 +106,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    }
     authApi.logout().catch(() => {
       // Ignore logout errors
     });
