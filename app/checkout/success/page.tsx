@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
@@ -11,7 +11,7 @@ import { paymentsApi } from "@/services/payments"
 import { useCart } from "@/lib/cart-context"
 import { toast } from "sonner"
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessPageContent() {
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
   const [loading, setLoading] = useState(true)
@@ -160,5 +160,13 @@ export default function CheckoutSuccessPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CheckoutSuccessPageContent />
+    </Suspense>
   )
 }
