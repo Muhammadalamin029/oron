@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -20,13 +20,13 @@ import { CreditCard, Building2, Smartphone, Lock, ChevronLeft } from "lucide-rea
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, totalPrice } = useCart()
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("card")
   const [formData, setFormData] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
+    email: user?.email || "",
+    firstName: user?.full_name?.split(" ")[0] || "",
+    lastName: user?.full_name?.split(" ").slice(1).join(" ") || "",
     address: "",
     city: "",
     state: "",
@@ -47,6 +47,18 @@ export default function CheckoutPage() {
   const tax = totalPrice * 0.075
   const shipping = totalPrice >= 100000 ? 0 : 2500
   const finalTotal = totalPrice + tax + shipping
+
+  useEffect(() => {
+    if (user) {
+      const nameParts = user.full_name?.split(" ") || []
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        firstName: nameParts[0] || prev.firstName,
+        lastName: nameParts.slice(1).join(" ") || prev.lastName,
+      }))
+    }
+  }, [user])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,8 +149,15 @@ export default function CheckoutPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
+                      readOnly={!!user}
+                      className={user ? "bg-muted" : ""}
                       required
                     />
+                    {user && (
+                      <p className="text-xs text-muted-foreground">
+                        Email from your account. Contact support if you need to change it.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>

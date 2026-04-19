@@ -17,9 +17,6 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
     setIsSubmitted(true)
     toast.success("Reset link sent to your email")
 

@@ -29,7 +29,6 @@ export function Header() {
 
   const desktopLinks = [
     ...navLinks,
-    ...(isAuthenticated ? [{ href: "/account", label: "Account" }] : []),
     ...(isAuthenticated ? [{ href: "/orders", label: "Orders" }] : []),
     ...(isAuthenticated ? [{ href: "/payments", label: "Payments" }] : []),
     ...(isAuthenticated ? [{ href: "/notifications", label: "Notifications" }] : []),
@@ -39,7 +38,7 @@ export function Header() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
           <Sheet>
@@ -49,7 +48,7 @@ export function Header() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px]">
+            <SheetContent side="left" className="w-75">
               <SheetTitle className="text-xl font-serif tracking-widest">ORON</SheetTitle>
               <nav className="mt-4">
                 <Accordion type="single" collapsible className="w-full">
@@ -151,14 +150,15 @@ export function Header() {
               </nav>
             </SheetContent>
           </Sheet>
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-8">
             {desktopLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium hover:text-primary transition-colors"
+                className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 group"
               >
                 {link.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-200 group-hover:w-full"></span>
               </Link>
             ))}
           </nav>
@@ -176,7 +176,7 @@ export function Header() {
             <span className="sr-only">Search</span>
           </Button>
 
-          {mounted && (
+          {mounted ? (
             <Button
               variant="ghost"
               size="icon"
@@ -189,10 +189,20 @@ export function Header() {
               )}
               <span className="sr-only">Toggle theme</span>
             </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-0"
+              disabled
+            >
+              <Moon className="h-5 w-5" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
           )}
 
           <Link
-            href={isAuthenticated ? "/orders" : "/auth/login"}
+            href={isAuthenticated ? "/account" : "/auth/login"}
             className="hidden md:block"
           >
             <Button variant="ghost" size="icon">

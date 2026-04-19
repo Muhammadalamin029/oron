@@ -121,9 +121,6 @@ export default function ContactPage() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
     toast.success("Message sent successfully! We'll get back to you soon.")
     setFormData({ name: "", email: "", subject: "", message: "" })
     setIsSubmitting(false)
