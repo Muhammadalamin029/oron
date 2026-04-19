@@ -11,12 +11,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/contexts/auth-context"
+import { ordersApi } from "@/services/orders"
+import { paymentsApi } from "@/services/payments"
 import { toast } from "sonner"
 import { CreditCard, Building2, Smartphone, Lock, ChevronLeft } from "lucide-react"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, totalPrice, clearCart } = useCart()
+  const { items, totalPrice } = useCart()
+  const { isAuthenticated } = useAuth()
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("card")
   const [formData, setFormData] = useState({
@@ -46,14 +50,37 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isAuthenticated) {
+      router.push(`/auth/login?next=${encodeURIComponent("/checkout")}`)
+      return
+    }
+
     setIsProcessing(true)
+    try {
+      const order = await ordersApi.createOrder({
+        items: items.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+        })),
+      })
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+      await ordersApi.upsertShippingInfo(order.id, {
+        email: formData.email,
+        phone: formData.phone,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: "Nigeria",
+      })
 
-    clearCart()
-    toast.success("Payment successful!")
-    router.push("/checkout/success")
+      const payment = await paymentsApi.initializePayment({ order_id: order.id })
+      window.location.href = payment.authorization_url
+    } catch (error: any) {
+      toast.error(error?.message || "Checkout failed")
+      setIsProcessing(false)
+    }
   }
 
   if (items.length === 0) {

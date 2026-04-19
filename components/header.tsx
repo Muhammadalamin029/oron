@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { useCart } from "@/lib/cart-context"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/auth-context"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
   const { totalItems } = useCart()
+  const { isAuthenticated, isAdmin, logout } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -22,6 +24,15 @@ export function Header() {
     { href: "/products", label: "Collection" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
+  ]
+
+  const desktopLinks = [
+    ...navLinks,
+    ...(isAuthenticated ? [{ href: "/orders", label: "Orders" }] : []),
+    ...(isAuthenticated ? [{ href: "/notifications", label: "Notifications" }] : []),
+    ...(isAuthenticated ? [{ href: "/disputes", label: "Disputes" }] : []),
+    ...(isAuthenticated ? [{ href: "/support", label: "Support" }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ]
 
   return (
@@ -47,23 +58,61 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  href="/auth/login"
-                  className="text-lg font-medium hover:text-primary transition-colors"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/admin"
-                  className="text-lg font-medium hover:text-primary transition-colors"
-                >
-                  Admin
-                </Link>
+                {!isAuthenticated ? (
+                  <Link
+                    href="/auth/login"
+                    className="text-lg font-medium hover:text-primary transition-colors"
+                  >
+                    Login
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/orders"
+                      className="text-lg font-medium hover:text-primary transition-colors"
+                    >
+                      Orders
+                    </Link>
+                    <Link
+                      href="/notifications"
+                      className="text-lg font-medium hover:text-primary transition-colors"
+                    >
+                      Notifications
+                    </Link>
+                    <Link
+                      href="/disputes"
+                      className="text-lg font-medium hover:text-primary transition-colors"
+                    >
+                      Disputes
+                    </Link>
+                    <Link
+                      href="/support"
+                      className="text-lg font-medium hover:text-primary transition-colors"
+                    >
+                      Support
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="text-lg font-medium hover:text-primary transition-colors"
+                      >
+                        Admin
+                      </Link>
+                    )}
+                    <Button
+                      variant="ghost"
+                      className="justify-start px-0 text-lg font-medium hover:text-primary transition-colors"
+                      onClick={logout}
+                    >
+                      Logout
+                    </Button>
+                  </>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
           <nav className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => (
+            {desktopLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -102,7 +151,10 @@ export function Header() {
             </Button>
           )}
 
-          <Link href="/auth/login" className="hidden md:block">
+          <Link
+            href={isAuthenticated ? "/orders" : "/auth/login"}
+            className="hidden md:block"
+          >
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
               <span className="sr-only">Account</span>

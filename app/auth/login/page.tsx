@@ -2,16 +2,19 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { Eye, EyeOff, Watch } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -24,20 +27,24 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate login
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    if (formData.email === "admin@oron.com" && formData.password === "admin") {
-      toast.success("Welcome back, Admin!")
-      router.push("/admin")
-    } else if (formData.email && formData.password) {
-      toast.success("Login successful!")
-      router.push("/")
-    } else {
-      toast.error("Please enter valid credentials")
+    try {
+      const user = await login(formData.email, formData.password)
+      toast.success(user.is_admin ? "Welcome back, Admin!" : "Login successful!")
+      const next = searchParams.get("next")
+      if (next) {
+        if (next.startsWith("/admin") && !user.is_admin) {
+          router.push("/")
+        } else {
+          router.push(next)
+        }
+        return
+      }
+      router.push(user.is_admin ? "/admin" : "/")
+    } catch (error: any) {
+      toast.error(error.message || "Please enter valid credentials")
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (

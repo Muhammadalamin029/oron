@@ -1,90 +1,113 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Package,
   ShoppingCart,
   Users,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react"
-
-const stats = [
-  {
-    title: "Total Revenue",
-    value: "₦4,525,000",
-    change: "+12.5%",
-    trend: "up",
-    icon: DollarSign,
-  },
-  {
-    title: "Orders",
-    value: "156",
-    change: "+8.2%",
-    trend: "up",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Products",
-    value: "48",
-    change: "+2",
-    trend: "up",
-    icon: Package,
-  },
-  {
-    title: "Customers",
-    value: "1,234",
-    change: "+18.7%",
-    trend: "up",
-    icon: Users,
-  },
-]
-
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "John Doe",
-    product: "High Quality Leather Watch",
-    amount: "₦45,000",
-    status: "Completed",
-  },
-  {
-    id: "ORD-002",
-    customer: "Jane Smith",
-    product: "Deep Onyx Classic",
-    amount: "₦62,000",
-    status: "Processing",
-  },
-  {
-    id: "ORD-003",
-    customer: "Mike Johnson",
-    product: "Leather Ultramoden Watch",
-    amount: "₦48,000",
-    status: "Pending",
-  },
-  {
-    id: "ORD-004",
-    customer: "Sarah Williams",
-    product: "High Godly Leather",
-    amount: "₦125,000",
-    status: "Completed",
-  },
-  {
-    id: "ORD-005",
-    customer: "David Brown",
-    product: "Beep Onyx Edition",
-    amount: "₦75,000",
-    status: "Shipped",
-  },
-]
-
-const topProducts = [
-  { name: "High Quality Leather Watch", sales: 45, revenue: "₦2,025,000" },
-  { name: "Deep Onyx Classic", sales: 38, revenue: "₦2,356,000" },
-  { name: "High Godly Leather", sales: 22, revenue: "₦2,750,000" },
-  { name: "Leather Ultramoden Watch", sales: 31, revenue: "₦1,488,000" },
-]
+import { adminApi } from "@/services/admin"
+import type { Order, User } from "@/types/api"
 
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [stats, setStats] = useState({
+    total_revenue: 0,
+    total_orders: 0,
+    total_products: 0,
+    total_customers: 0,
+  })
+
+  const userById = useMemo(() => {
+    const map = new Map<string, User>()
+    for (const u of users) map.set(u.id, u)
+    return map
+  }, [users])
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(price)
+  }
+
+  const recentOrders = useMemo(() => {
+    return [...orders]
+      .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
+      .slice(0, 5)
+      .map((order) => {
+        const user = userById.get(order.user_id)
+        const firstItem = order.items?.[0]?.product?.name
+        return {
+          id: order.id,
+          customer: user?.full_name || user?.email || order.user_id,
+          product: firstItem || "—",
+          amount: formatPrice(order.total_amount),
+          status: order.status,
+        }
+      })
+  }, [orders, userById])
+
+  const topProducts = useMemo(() => {
+    const acc = new Map<
+      string,
+      { name: string; sales: number; revenue: number }
+    >()
+
+    for (const order of orders) {
+      const status = (order.status || "").toLowerCase()
+      if (!["paid", "completed", "success", "delivered", "shipped"].includes(status))
+        continue
+      for (const item of order.items || []) {
+        const name = item.product?.name || "Product"
+        const current = acc.get(name) || { name, sales: 0, revenue: 0 }
+        current.sales += item.quantity
+        current.revenue += item.price * item.quantity
+        acc.set(name, current)
+      }
+    }
+
+    return Array.from(acc.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 4)
+      .map((p) => ({
+        name: p.name,
+        sales: p.sales,
+        revenue: formatPrice(p.revenue),
+      }))
+  }, [orders])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        setLoading(true)
+        const [statsRes, ordersRes, usersRes] = await Promise.all([
+          adminApi.getDashboardStats(),
+          adminApi.getAllOrders(),
+          adminApi.getUsers(),
+        ])
+        if (cancelled) return
+        setStats(statsRes)
+        setOrders(ordersRes)
+        setUsers(usersRes)
+      } catch (error: any) {
+        if (!cancelled) toast.error(error?.message || "Failed to load dashboard")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="space-y-6">
       <div>
@@ -95,7 +118,12 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {[
+          { title: "Total Revenue", value: formatPrice(stats.total_revenue), icon: DollarSign },
+          { title: "Orders", value: String(stats.total_orders), icon: ShoppingCart },
+          { title: "Products", value: String(stats.total_products), icon: Package },
+          { title: "Customers", value: String(stats.total_customers), icon: Users },
+        ].map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -105,24 +133,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-card-foreground">
-                {stat.value}
-              </div>
-              <div className="flex items-center text-sm mt-1">
-                {stat.trend === "up" ? (
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
-                )}
-                <span
-                  className={
-                    stat.trend === "up" ? "text-green-500" : "text-red-500"
-                  }
-                >
-                  {stat.change}
-                </span>
-                <span className="text-muted-foreground ml-1">
-                  from last month
-                </span>
+                {loading ? "—" : stat.value}
               </div>
             </CardContent>
           </Card>
@@ -136,7 +147,14 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentOrders.map((order) => (
+              {loading
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-14 rounded-md bg-muted/30 animate-pulse"
+                    />
+                  ))
+                : recentOrders.map((order) => (
                 <div
                   key={order.id}
                   className="flex items-center justify-between py-2 border-b border-border last:border-0"
@@ -155,11 +173,13 @@ export default function AdminDashboard() {
                     </p>
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${
-                        order.status === "Completed"
+                        (order.status || "").toLowerCase() === "paid" ||
+                        (order.status || "").toLowerCase() === "completed" ||
+                        (order.status || "").toLowerCase() === "success"
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : order.status === "Processing"
+                          : (order.status || "").toLowerCase() === "processing"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            : order.status === "Shipped"
+                            : (order.status || "").toLowerCase() === "shipped"
                               ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                               : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
                       }`}
@@ -179,7 +199,14 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topProducts.map((product, index) => (
+              {loading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-12 rounded-md bg-muted/30 animate-pulse"
+                    />
+                  ))
+                : topProducts.map((product, index) => (
                 <div
                   key={product.name}
                   className="flex items-center gap-4 py-2 border-b border-border last:border-0"

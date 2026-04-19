@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { Eye, EyeOff, Watch } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { register } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -37,13 +39,15 @@ export default function RegisterPage() {
 
     setIsLoading(true)
 
-    // Simulate registration
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    toast.success("Account created successfully!")
-    router.push("/auth/login")
-
-    setIsLoading(false)
+    try {
+      await register(formData.email, formData.name, formData.password)
+      toast.success("Account created! Please check your email to verify.")
+      router.push("/auth/login")
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

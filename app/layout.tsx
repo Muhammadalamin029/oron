@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CartProvider } from "@/lib/cart-context"
+import { AuthProvider } from "@/contexts/auth-context"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
@@ -56,7 +57,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CartProvider>{children}</CartProvider>
+          <AuthProvider>
+            <CartProvider>{children}</CartProvider>
+          </AuthProvider>
           <Toaster />
         </ThemeProvider>
         <Analytics />

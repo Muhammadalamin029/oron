@@ -1,11 +1,59 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Package, Mail } from "lucide-react"
+import { paymentsApi } from "@/services/payments"
+import { useCart } from "@/lib/cart-context"
+import { toast } from "sonner"
 
 export default function CheckoutSuccessPage() {
-  const orderNumber = `ORD-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+  const searchParams = useSearchParams()
+  const { clearCart } = useCart()
+  const [loading, setLoading] = useState(true)
+  const [orderId, setOrderId] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const reference = searchParams.get("reference")
+    if (!reference) {
+      setLoading(false)
+      setMessage("Missing payment reference.")
+      return
+    }
+
+    ;(async () => {
+      try {
+        setLoading(true)
+        const result = await paymentsApi.verifyPayment(reference)
+        if (cancelled) return
+
+        setOrderId(result.order_id)
+        if (result.status === "success" || result.order_status === "paid") {
+          clearCart()
+          setMessage("Payment verified successfully.")
+        } else {
+          setMessage(`Payment status: ${result.status}`)
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          toast.error(error?.message || "Failed to verify payment")
+          setMessage(error?.message || "Failed to verify payment.")
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams, clearCart])
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,8 +76,11 @@ export default function CheckoutSuccessPage() {
           <div className="bg-card rounded-lg border border-border p-6 mb-8">
             <p className="text-sm text-muted-foreground mb-2">Order Number</p>
             <p className="text-2xl font-semibold text-card-foreground mb-6">
-              {orderNumber}
+              {loading ? "Verifying..." : orderId ? orderId : "—"}
             </p>
+            {!loading && message && (
+              <p className="text-sm text-muted-foreground mb-6">{message}</p>
+            )}
 
             <div className="flex justify-center gap-8 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -94,14 +145,14 @@ export default function CheckoutSuccessPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <Link href="/products" className="flex-1">
+            <Link href="/orders" className="flex-1">
               <Button variant="outline" className="w-full">
-                Continue Shopping
+                View My Orders
               </Button>
             </Link>
-            <Link href="/" className="flex-1">
+            <Link href="/products" className="flex-1">
               <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                Back to Home
+                Continue Shopping
               </Button>
             </Link>
           </div>

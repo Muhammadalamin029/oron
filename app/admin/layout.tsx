@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
   LayoutDashboard,
@@ -14,16 +14,23 @@ import {
   Sun,
   Menu,
   Watch,
+  MessageCircle,
+  Star,
+  AlertTriangle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/auth-context"
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/reviews", label: "Reviews", icon: Star },
+  { href: "/admin/disputes", label: "Disputes", icon: AlertTriangle },
+  { href: "/admin/support", label: "Support", icon: MessageCircle },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
 
@@ -32,13 +39,21 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+  const { user, loading, isAuthenticated, isAdmin, logout } = useAuth()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!loading && (!isAuthenticated || !isAdmin)) {
+      router.replace(`/auth/login?next=${encodeURIComponent("/admin")}`)
+    }
+  }, [loading, isAuthenticated, isAdmin, router])
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <div
@@ -91,6 +106,17 @@ export default function AdminLayout({
             <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
           </Button>
         )}
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3"
+          onClick={() => {
+            logout()
+            router.push("/auth/login")
+          }}
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Logout</span>
+        </Button>
         <Link href="/">
           <Button variant="ghost" className="w-full justify-start gap-3">
             <LogOut className="h-5 w-5" />
@@ -123,10 +149,17 @@ export default function AdminLayout({
           <div className="flex items-center gap-4 ml-auto">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">A</span>
+                <span className="text-sm font-medium text-primary">
+                  {(user?.full_name || "Admin")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()}
+                </span>
               </div>
               <span className="text-sm font-medium text-foreground hidden sm:block">
-                Admin
+                {user?.full_name || "Admin"}
               </span>
             </div>
           </div>

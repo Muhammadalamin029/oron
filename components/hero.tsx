@@ -1,48 +1,51 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useState, useEffect } from "react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const slides = [
   {
     title: "High-Quality Leather-Strapped Watch",
     subtitle: "High quality wrist watch brand in Nigeria",
-    image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=600&fit=crop",
   },
   {
     title: "Luxurious Wrist Watch Collection",
     subtitle: "Elegance meets precision in every timepiece",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=600&fit=crop",
   },
   {
     title: "Premium Craftsmanship",
     subtitle: "Handcrafted with attention to every detail",
-    image: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=800&h=600&fit=crop",
   },
-]
+];
 
 export function Hero() {
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [])
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length)
-  }
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
-  }
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
 
   return (
-    <section className="relative h-[500px] md:h-[600px] overflow-hidden bg-muted">
+    <section className="relative h-125 md:h-150 overflow-hidden bg-muted">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -54,18 +57,18 @@ export function Hero() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${slide.image})` }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/60 to-black/40" />
           </div>
-          <div className="container mx-auto px-4 h-full flex items-center">
-            <div className="max-w-xl">
-              <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground mb-4 text-balance">
+          <div className="container mx-auto px-4 h-full flex items-center z-20 relative">
+            <div className="max-w-xl text-white">
+              <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-4 text-balance">
                 {slide.title}
               </h2>
-              <p className="text-muted-foreground text-lg mb-6">
+              <p className="text-white/90 text-lg mb-6">
                 {slide.subtitle}
               </p>
               <Link href="/products">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-base font-medium">
+                <Button className="bg-white text-black hover:bg-gray-200 px-8 py-6 text-base font-medium">
                   EXPLORE OUR COLLECTION
                 </Button>
               </Link>
@@ -102,5 +105,5 @@ export function Hero() {
         ))}
       </div>
     </section>
-  )
+  );
 }
