@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { useTheme } from "next-themes"
-import { Menu, Search, ShoppingCart, Moon, Sun, User } from "lucide-react"
+import { Menu, Search, ShoppingCart, Moon, Sun, User, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useCart } from "@/lib/cart-context"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
@@ -28,7 +29,9 @@ export function Header() {
 
   const desktopLinks = [
     ...navLinks,
+    ...(isAuthenticated ? [{ href: "/account", label: "Account" }] : []),
     ...(isAuthenticated ? [{ href: "/orders", label: "Orders" }] : []),
+    ...(isAuthenticated ? [{ href: "/payments", label: "Payments" }] : []),
     ...(isAuthenticated ? [{ href: "/notifications", label: "Notifications" }] : []),
     ...(isAuthenticated ? [{ href: "/disputes", label: "Disputes" }] : []),
     ...(isAuthenticated ? [{ href: "/support", label: "Support" }] : []),
@@ -48,66 +51,103 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px]">
               <SheetTitle className="text-xl font-serif tracking-widest">ORON</SheetTitle>
-              <nav className="flex flex-col gap-4 mt-4">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-lg font-medium hover:text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                {!isAuthenticated ? (
-                  <Link
-                    href="/auth/login"
-                    className="text-lg font-medium hover:text-primary transition-colors"
-                  >
-                    Login
-                  </Link>
-                ) : (
-                  <>
-                    <Link
-                      href="/orders"
-                      className="text-lg font-medium hover:text-primary transition-colors"
-                    >
-                      Orders
-                    </Link>
-                    <Link
-                      href="/notifications"
-                      className="text-lg font-medium hover:text-primary transition-colors"
-                    >
-                      Notifications
-                    </Link>
-                    <Link
-                      href="/disputes"
-                      className="text-lg font-medium hover:text-primary transition-colors"
-                    >
-                      Disputes
-                    </Link>
-                    <Link
-                      href="/support"
-                      className="text-lg font-medium hover:text-primary transition-colors"
-                    >
-                      Support
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        className="text-lg font-medium hover:text-primary transition-colors"
-                      >
-                        Admin
-                      </Link>
-                    )}
-                    <Button
-                      variant="ghost"
-                      className="justify-start px-0 text-lg font-medium hover:text-primary transition-colors"
-                      onClick={logout}
-                    >
-                      Logout
-                    </Button>
-                  </>
-                )}
+              <nav className="mt-4">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="main-nav">
+                    <AccordionTrigger className="text-left">
+                      Main Menu
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-2">
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  {isAuthenticated && (
+                    <AccordionItem value="account">
+                      <AccordionTrigger className="text-left">
+                        My Account
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-2">
+                        <Link
+                          href="/account"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Account Settings
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Orders
+                        </Link>
+                        <Link
+                          href="/payments"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Payment History
+                        </Link>
+                        <Link
+                          href="/notifications"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Notifications
+                        </Link>
+                        <Link
+                          href="/disputes"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Disputes
+                        </Link>
+                        <Link
+                          href="/support"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Support
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                          >
+                            Admin Dashboard
+                          </Link>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                  
+                  <AccordionItem value="actions">
+                    <AccordionTrigger className="text-left">
+                      Actions
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-2">
+                      {!isAuthenticated ? (
+                        <Link
+                          href="/auth/login"
+                          className="block py-2 text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Login
+                        </Link>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          className="justify-start px-0 py-2 text-lg font-medium hover:text-primary transition-colors w-full"
+                          onClick={logout}
+                        >
+                          Logout
+                        </Button>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </nav>
             </SheetContent>
           </Sheet>

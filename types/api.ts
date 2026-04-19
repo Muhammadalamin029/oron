@@ -81,6 +81,7 @@ export interface Order {
   items: OrderItem[];
   shipping_info?: OrderShippingInfo | null;
   shipments?: Shipment[];
+  user?: User;
 }
 
 export interface OrderItem {
@@ -208,6 +209,18 @@ export interface SupportTicket {
   created_at: string;
   updated_at?: string;
   messages?: SupportMessage[];
+}
+
+// Payments
+export interface Payment {
+  id: string;
+  order_id: string;
+  amount: number;
+  status: string;
+  provider: string;
+  reference: string;
+  created_at: string;
+  order?: Order;
 }
 
 // Notifications

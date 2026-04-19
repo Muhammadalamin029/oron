@@ -12,9 +12,18 @@ export const settingsApi = {
     const response = await apiClient.get<SiteSetting[]>('/settings/');
     return response.data;
   },
+
+  getSetting: async (key: string): Promise<SiteSetting | null> => {
+    try {
+      const response = await apiClient.get<SiteSetting>(`/settings/${key}`);
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  },
   
-  updateSetting: async (key: string, value: string, description?: string): Promise<SiteSetting> => {
-    const response = await apiClient.post<SiteSetting>(`/settings/${key}`, { value, description });
+  updateSetting: async (key: string, data: { value: string; description?: string }): Promise<SiteSetting> => {
+    const response = await apiClient.post<SiteSetting>(`/settings/${key}`, data);
     return response.data;
   }
 };

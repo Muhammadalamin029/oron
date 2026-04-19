@@ -7,6 +7,7 @@ import { User, AuthResponse } from '@/types/api';
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, fullName: string, password: string) => Promise<User>;
   logout: () => void;
@@ -109,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     token,
+    setUser,
     login,
     register,
     logout,

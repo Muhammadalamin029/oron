@@ -1,10 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,9 +11,8 @@ import { addressesApi } from "@/services/addresses"
 import { useAuth } from "@/contexts/auth-context"
 import type { Address } from "@/types/api"
 
-export default function AddressesPage() {
-  const router = useRouter()
-  const { isAuthenticated, loading } = useAuth()
+export function AddressesSection() {
+  const { isAuthenticated } = useAuth()
   const [addresses, setAddresses] = useState<Address[]>([])
   const [fetching, setFetching] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -31,12 +27,6 @@ export default function AddressesPage() {
     postal_code: "",
     is_default: true,
   })
-
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.replace(`/auth/login?next=${encodeURIComponent("/account/addresses")}`)
-    }
-  }, [loading, isAuthenticated, router])
 
   const load = async () => {
     const data = await addressesApi.list()
@@ -63,22 +53,18 @@ export default function AddressesPage() {
   }, [isAuthenticated])
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-serif text-foreground">Addresses</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your saved shipping addresses.
-          </p>
-        </div>
-
+    <Card>
+      <CardHeader>
+        <CardTitle>Shipping Addresses</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Manage your saved shipping addresses for quick checkout
+        </p>
+      </CardHeader>
+      <CardContent>
         <div className="grid lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Add Address</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="lg:col-span-1">
+            <div className="space-y-4">
+              <h3 className="font-medium">Add New Address</h3>
               <form
                 className="space-y-4"
                 onSubmit={async (e) => {
@@ -179,93 +165,101 @@ export default function AddressesPage() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-primary text-primary-foreground"
+                  className="w-full"
                   disabled={creating}
                 >
                   {creating ? "Saving..." : "Save Address"}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Saved Addresses</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="lg:col-span-2">
+            <div className="space-y-4">
+              <h3 className="font-medium">Saved Addresses</h3>
               {fetching ? (
                 <div className="space-y-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-14 rounded-md bg-muted/30 animate-pulse" />
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-20 rounded-md bg-muted/30 animate-pulse" />
                   ))}
                 </div>
               ) : addresses.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  No saved addresses.
+                <div className="py-8 text-center text-muted-foreground border rounded-md">
+                  No saved addresses yet.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {addresses.map((a) => (
                     <div key={a.id} className="rounded-md border border-border p-4">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {a.label || "Address"} {a.is_default ? "(Default)" : ""}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="font-medium text-foreground">
+                              {a.label || "Address"}
+                            </p>
+                            {a.is_default && (
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
                             {a.line1}
-                            {a.line2 ? `, ${a.line2}` : ""} • {a.city} {a.state}
+                            {a.line2 ? `, ${a.line2}` : ""} 
+                            {a.city && `, ${a.city}`}
+                            {a.state && `, ${a.state}`}
+                            {a.postal_code && ` ${a.postal_code}`}
                           </p>
                           {a.phone && (
                             <p className="text-sm text-muted-foreground mt-1">
-                              {a.phone}
+                              Phone: {a.phone}
                             </p>
                           )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={async () => {
-                            try {
-                              await addressesApi.delete(a.id)
-                              toast.success("Deleted")
-                              await load()
-                            } catch (error: any) {
-                              toast.error(error?.message || "Failed to delete")
-                            }
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                      {!a.is_default && (
-                        <div className="mt-3">
+                        <div className="flex gap-2">
+                          {!a.is_default && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  await addressesApi.update(a.id, { is_default: true })
+                                  toast.success("Set as default")
+                                  await load()
+                                } catch (error: any) {
+                                  toast.error(error?.message || "Failed to update")
+                                }
+                              }}
+                            >
+                              Set Default
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
+                            className="text-destructive hover:text-destructive"
                             onClick={async () => {
                               try {
-                                await addressesApi.update(a.id, { is_default: true })
-                                toast.success("Set as default")
+                                await addressesApi.delete(a.id)
+                                toast.success("Address deleted")
                                 await load()
                               } catch (error: any) {
-                                toast.error(error?.message || "Failed to update")
+                                toast.error(error?.message || "Failed to delete")
                               }
                             }}
                           >
-                            Set Default
+                            Delete
                           </Button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </CardContent>
+    </Card>
   )
 }

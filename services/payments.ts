@@ -1,3 +1,4 @@
+import { Payment } from '@/types/api';
 import { apiClient } from '@/lib/api';
 
 export interface PaystackInitResponse {
@@ -22,6 +23,21 @@ export const paymentsApi = {
   
   verifyPayment: async (reference: string): Promise<PaymentVerifyResponse> => {
     const response = await apiClient.get<PaymentVerifyResponse>(`/payments/verify/${reference}`);
+    return response.data;
+  },
+
+  getUserPayments: async (): Promise<Payment[]> => {
+    const response = await apiClient.get<Payment[]>('/payments/my-payments');
+    return response.data;
+  },
+
+  getAllPayments: async (): Promise<Payment[]> => {
+    const response = await apiClient.get<Payment[]>('/payments/admin/all-payments');
+    return response.data;
+  },
+
+  getPaymentDetails: async (paymentId: string): Promise<Payment> => {
+    const response = await apiClient.get<Payment>(`/payments/admin/${paymentId}`);
     return response.data;
   }
 };

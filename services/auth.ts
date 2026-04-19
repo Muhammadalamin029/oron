@@ -40,4 +40,21 @@ export const authApi = {
     const response = await apiClient.post<AuthResponse>('/auth/refresh', { refresh_token });
     return response.data;
   },
+
+  // Resend verification email
+  resendVerification: async (email: string): Promise<{ msg: string }> => {
+    const response = await apiClient.post<{ msg: string }>('/auth/resend-verification', { email });
+    return response.data;
+  },
+
+  // Get verification status
+  getVerificationStatus: async (): Promise<{ is_verified: boolean; email: string }> => {
+    const response = await apiClient.get<{ is_verified: boolean; email: string }>('/auth/verification-status');
+    return response.data;
+  },
+
+  updateProfile: async (data: { full_name?: string }): Promise<User> => {
+    const response = await apiClient.patch<User>('/auth/profile', data);
+    return response.data;
+  },
 };

@@ -17,6 +17,9 @@ import {
   MessageCircle,
   Star,
   AlertTriangle,
+  Bell,
+  FileText,
+  Mail,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -26,12 +29,16 @@ import { useAuth } from "@/contexts/auth-context"
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/categories", label: "Categories", icon: Watch },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/disputes", label: "Disputes", icon: AlertTriangle },
   { href: "/admin/support", label: "Support", icon: MessageCircle },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/settings/policies", label: "Policies", icon: FileText },
+  { href: "/admin/settings/contact", label: "Contact", icon: Mail },
 ]
 
 export default function AdminLayout({
