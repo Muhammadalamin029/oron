@@ -1,41 +1,24 @@
-import { Shield, Award, CheckCircle } from "lucide-react"
+import { Shield, Truck, Headphones, Lock, CheckCircle } from "lucide-react"
 
 const badges = [
-  {
-    icon: Shield,
-    title: "AUTHENTICITY",
-    subtitle: "GUARANTEED",
-  },
-  {
-    icon: Award,
-    title: "2-YEAR WARRANTY",
-    subtitle: "",
-  },
-  {
-    icon: CheckCircle,
-    title: "100% AUTHENTICITY",
-    subtitle: "GUARANTEED",
-  },
+  { icon: CheckCircle, label: "2-YEAR WARRANTY" },
+  { icon: Truck,       label: "NATIONWIDE DELIVERY" },
+  { icon: Headphones,  label: "TECH SUPPORT 24/7" },
+  { icon: Shield,      label: "100% AUTHENTIC" },
+  { icon: Lock,        label: "SECURE CHECKOUT" },
 ]
 
 export function TrustBadges() {
   return (
-    <section className="py-8 border-y border-border bg-card">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-          {badges.map((badge, index) => (
-            <div key={index} className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <badge.icon className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-card-foreground text-sm">
-                  {badge.title}
-                </p>
-                {badge.subtitle && (
-                  <p className="text-xs text-muted-foreground">{badge.subtitle}</p>
-                )}
-              </div>
+    <section className="py-6 border-y border-white/5 bg-[#1c1b1b]">
+      <div className="max-w-[1280px] mx-auto px-6">
+        <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+          {badges.map(({ icon: Icon, label }, i) => (
+            <div key={i} className="flex items-center gap-2.5 group">
+              <Icon className="h-4 w-4 text-[#ff6b00] flex-shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="text-[11px] font-semibold tracking-[0.12em] text-[#c6c6c6] whitespace-nowrap">
+                {label}
+              </span>
             </div>
           ))}
         </div>
