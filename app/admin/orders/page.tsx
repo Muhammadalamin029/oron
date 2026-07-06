@@ -253,7 +253,7 @@ export default function AdminOrdersPage() {
   return (
     <>
       <div className="space-y-6">
-        <AdminPageHeader title="ORDER MANIFEST" sub="/ ALL TRANSACTIONS" />
+        <AdminPageHeader title="ORDERS" sub="/ ALL TRANSACTIONS" />
 
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">

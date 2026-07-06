@@ -55,10 +55,10 @@ export function AdminSidebar() {
         <div>
           <h1 className="font-display font-bold text-lg leading-none tracking-tighter">
             <span className="text-[#e5e2e1]">ORON</span>
-            <span className="text-[#ff6b00]"> / CMD</span>
+            <span className="text-[#ff6b00]"> / ADMIN</span>
           </h1>
           <p className="text-[9px] font-bold tracking-[0.25em] text-[#9a9898] uppercase mt-1">
-            SYSTEM ADMIN
+            ADMINISTRATOR
           </p>
         </div>
       </div>

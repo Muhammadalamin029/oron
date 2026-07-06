@@ -15,8 +15,8 @@ import {
 } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
 
-/* ── Operative status badge ── */
-function OperativeStatus({ verified, orderCount }: { verified?: boolean; orderCount: number }) {
+/* ── Customer status badge ── */
+function CustomerStatus({ verified, orderCount }: { verified?: boolean; orderCount: number }) {
   if (!verified)
     return (
       <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#3a3939]/50 border border-[#3a3939] text-[#9a9898] text-[10px] font-bold tracking-[0.15em] uppercase">
@@ -40,7 +40,7 @@ function OperativeStatus({ verified, orderCount }: { verified?: boolean; orderCo
 }
 
 /* ── Avatar circle ── */
-function OperativeAvatar({ name, hasOrders }: { name: string; hasOrders: boolean }) {
+function CustomerAvatar({ name, hasOrders }: { name: string; hasOrders: boolean }) {
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
   return (
     <div
@@ -124,14 +124,14 @@ export default function AdminCustomersPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="USER REGISTRY" sub="/ ALL OPERATORS" />
+      <AdminPageHeader title="CUSTOMERS" sub="/ ALL CUSTOMERS" />
 
       {/* Search & actions */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9898]" />
           <input
-            placeholder="Search operatives by ID, name, or node..."
+            placeholder="Search customers by ID, name, or email..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-10 pr-14 py-3 bg-[#0a0a0a] border border-[#1a1a1a] text-white placeholder:text-[#9a9898] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#ff6b00] focus:border-[#ff6b00] transition-all"
@@ -157,7 +157,7 @@ export default function AdminCustomersPage() {
           <SkeletonRows count={8} height="h-16" />
         ) : filtered.length === 0 ? (
           <EmptyState
-            title="No operatives found"
+            title="No customers found"
             message="Try adjusting your search query."
             action={
               <button
@@ -174,7 +174,7 @@ export default function AdminCustomersPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[#1a1a1a] bg-[#0a0a0a]/50">
-                    {["Operative", "Status", "Orders", "Value (NGN)", "Join Node"].map((h, i) => (
+                    {["Customer", "Status", "Orders", "Value (NGN)", "Joined"].map((h, i) => (
                       <th
                         key={h}
                         className={cn(
@@ -196,10 +196,10 @@ export default function AdminCustomersPage() {
                         key={u.id}
                         className="border-l-4 border-transparent hover:border-l-[#ff6b00] hover:bg-[#1a1a1a]/40 transition-all cursor-pointer group"
                       >
-                        {/* Operative */}
+                        {/* Customer */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
-                            <OperativeAvatar name={u.full_name || u.email} hasOrders={hasOrders} />
+                            <CustomerAvatar name={u.full_name || u.email} hasOrders={hasOrders} />
                             <div className="min-w-0">
                               <p className="font-bold text-white text-sm group-hover:text-[#ff6b00] transition-colors truncate">
                                 {u.full_name || "—"}
@@ -211,7 +211,7 @@ export default function AdminCustomersPage() {
 
                         {/* Status */}
                         <td className="px-6 py-4">
-                          <OperativeStatus verified={u.is_verified} orderCount={s.count} />
+                          <CustomerStatus verified={u.is_verified} orderCount={s.count} />
                         </td>
 
                         {/* Orders count */}
@@ -242,7 +242,7 @@ export default function AdminCustomersPage() {
             {/* Pagination footer */}
             <div className="p-4 border-t border-[#1a1a1a] flex items-center justify-between bg-[#0a0a0a]/30">
               <span className="text-[#9a9898] font-mono text-xs">
-                Showing {paginated.length} of {filtered.length} Operatives
+                Showing {paginated.length} of {filtered.length} Customers
               </span>
               <div className="flex gap-2">
                 <button

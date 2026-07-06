@@ -18,22 +18,22 @@ import {
 } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
 
-/* ── Deploy Product Modal ── */
-function DeployModal({
+/* ── Create Product Modal ── */
+function CreateModal({
   categories,
   onClose,
-  onDeployed,
+  onCreated,
 }: {
   categories: Category[]
   onClose: () => void
-  onDeployed: () => Promise<void>
+  onCreated: () => Promise<void>
 }) {
   const [form, setForm] = useState({
     name: "", price: "", stock: "0",
     category_id: categories[0]?.id || "",
     image_url: "", description: "",
   })
-  const [deploying, setDeploying] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   const set = (k: keyof typeof form) => (v: string) =>
     setForm((p) => ({ ...p, [k]: v }))
@@ -41,7 +41,7 @@ function DeployModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      setDeploying(true)
+      setCreating(true)
       await productsApi.createProduct({
         name: form.name,
         description: form.description,
@@ -50,13 +50,13 @@ function DeployModal({
         category_id: form.category_id,
         stock: Number(form.stock || 0),
       })
-      toast.success("Product deployed successfully")
-      await onDeployed()
+      toast.success("Product added successfully")
+      await onCreated()
       onClose()
     } catch (err: any) {
-      toast.error(err?.message || "Failed to deploy product")
+      toast.error(err?.message || "Failed to add product")
     } finally {
-      setDeploying(false)
+      setCreating(false)
     }
   }
 
@@ -66,7 +66,7 @@ function DeployModal({
         {/* Header */}
         <div className="p-6 border-b border-white/5 flex justify-between items-center">
           <h3 className="font-display font-bold text-lg text-white tracking-widest uppercase">
-            DEPLOY NEW PRODUCT
+            ADD NEW PRODUCT
           </h3>
           <button
             onClick={onClose}
@@ -156,8 +156,8 @@ function DeployModal({
             >
               CANCEL
             </button>
-            <OrangeButton type="submit" disabled={deploying} className="flex-1 justify-center">
-              {deploying ? "DEPLOYING..." : "DEPLOY PRODUCT"}
+            <OrangeButton type="submit" disabled={creating} className="flex-1 justify-center">
+              {creating ? "ADDING..." : "ADD PRODUCT"}
             </OrangeButton>
           </div>
         </form>
@@ -246,7 +246,7 @@ export default function AdminProductsPage() {
               onClick={() => setShowModal(true)}
               className="bg-[#ff6b00] text-white font-bold text-[10px] tracking-[0.2em] uppercase px-6 py-3 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(255,107,0,0.4)] hover:shadow-[0_0_25px_rgba(255,107,0,0.6)] transition-all active:scale-95"
             >
-              <Plus className="h-4 w-4" /> DEPLOY PRODUCT
+              <Plus className="h-4 w-4" /> ADD PRODUCT
             </button>
           }
         />
@@ -378,10 +378,10 @@ export default function AdminProductsPage() {
       </div>
 
       {showModal && (
-        <DeployModal
+        <CreateModal
           categories={categories}
           onClose={() => setShowModal(false)}
-          onDeployed={load}
+          onCreated={load}
         />
       )}
     </>

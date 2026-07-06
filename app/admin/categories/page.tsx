@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 
 /* ── Create / Edit Modal ── */
-function ClassificationModal({
+function CategoryModal({
   initial,
   onClose,
   onCommit,
@@ -38,10 +38,10 @@ function ClassificationModal({
       setSaving(true)
       if (isEdit && initial) {
         await categoriesApi.update(initial.id, { name: name.trim(), description })
-        toast.success("Classification updated")
+        toast.success("Category updated")
       } else {
         await categoriesApi.create({ name: name.trim(), description })
-        toast.success("Classification committed")
+        toast.success("Category added")
       }
       await onCommit()
       onClose()
@@ -59,7 +59,7 @@ function ClassificationModal({
         <div className="flex justify-between items-center p-6 border-b border-[#1a1a1a]">
           <h2 className="font-display font-bold text-xl text-white uppercase tracking-wider flex items-center gap-3">
             <CheckSquare className="h-5 w-5 text-[#ff6b00]" />
-            {isEdit ? "EDIT CLASSIFICATION" : "INITIALIZE CLASSIFICATION"}
+            {isEdit ? "EDIT CATEGORY" : "ADD CATEGORY"}
           </h2>
           <button
             onClick={onClose}
@@ -81,7 +81,7 @@ function ClassificationModal({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter classification matrix name..."
+                placeholder="Enter category name..."
                 required
                 className="w-full bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-3 text-[#e5e2e1] font-mono text-sm placeholder:text-[#353534] focus:outline-none focus:border-[#ff6b00] focus:ring-1 focus:ring-[#ff6b00] transition-all"
               />
@@ -96,7 +96,7 @@ function ClassificationModal({
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detail the parameters of this classification..."
+                placeholder="Detail the category description..."
                 className="w-full bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-3 text-[#e5e2e1] text-sm placeholder:text-[#353534] focus:outline-none focus:border-[#ff6b00] focus:ring-1 focus:ring-[#ff6b00] transition-all resize-none"
               />
             </div>
@@ -104,7 +104,7 @@ function ClassificationModal({
             {/* Visibility toggle */}
             <div className="space-y-2">
               <label className="block text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase">
-                Visibility Status
+                Status
               </label>
               <div className="flex items-center gap-4 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-3">
                 <button
@@ -123,7 +123,7 @@ function ClassificationModal({
                   />
                 </button>
                 <span className={cn("font-mono text-sm font-bold", visible ? "text-[#e5e2e1]" : "text-[#353534]")}>
-                  {visible ? "LIVE" : "ARCHIVED"}
+                  {visible ? "ACTIVE" : "INACTIVE"}
                 </span>
               </div>
             </div>
@@ -139,7 +139,7 @@ function ClassificationModal({
               CANCEL
             </button>
             <OrangeButton type="submit" disabled={saving} className="rounded-full px-8">
-              {saving ? "SAVING..." : "COMMIT"}
+              {saving ? "SAVING..." : "SAVE"}
             </OrangeButton>
           </div>
         </form>
@@ -201,7 +201,7 @@ export default function AdminCategoriesPage() {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
     try {
       await categoriesApi.delete(id)
-      toast.success("Classification removed")
+      toast.success("Category removed")
       await load()
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete category")
@@ -213,13 +213,13 @@ export default function AdminCategoriesPage() {
       <div className="space-y-6">
         <AdminPageHeader
           title="CATEGORY MANAGEMENT"
-          sub="/ INVENTORY MATRIX"
+          sub="/ CATEGORIES"
           action={
             <button
               onClick={() => { setEditing(null); setModalOpen(true) }}
               className="bg-[#ff6b00] text-white font-bold text-[10px] tracking-[0.2em] uppercase px-6 py-3 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(255,107,0,0.4)] hover:shadow-[0_0_25px_rgba(255,107,0,0.6)] transition-all active:scale-95"
             >
-              <Plus className="h-4 w-4" /> NEW CLASSIFICATION
+              <Plus className="h-4 w-4" /> NEW CATEGORY
             </button>
           }
         />
@@ -231,7 +231,7 @@ export default function AdminCategoriesPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9898]" />
               <input
-                placeholder="QUERY CLASSIFICATIONS..."
+                placeholder="SEARCH CATEGORIES..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg pl-10 pr-4 py-2 text-[#e5e2e1] font-mono text-sm placeholder:text-[#353534]/50 focus:outline-none focus:border-[#ff6b00] focus:ring-1 focus:ring-[#ff6b00] transition-all"
@@ -253,11 +253,11 @@ export default function AdminCategoriesPage() {
             <SkeletonRows count={5} height="h-14" />
           ) : filtered.length === 0 ? (
             <EmptyState
-              title="No classifications found"
+              title="No categories found"
               message="Try a different query or create a new one."
               action={
                 <OrangeButton onClick={() => { setEditing(null); setModalOpen(true) }}>
-                  NEW CLASSIFICATION
+                  NEW CATEGORY
                 </OrangeButton>
               }
             />
@@ -291,12 +291,12 @@ export default function AdminCategoriesPage() {
                       {isLive ? (
                         <>
                           <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                          <span className="text-emerald-500 font-bold text-[10px] tracking-widest">LIVE</span>
+                          <span className="text-emerald-500 font-bold text-[10px] tracking-widest">ACTIVE</span>
                         </>
                       ) : (
                         <>
                           <span className="w-2 h-2 rounded-full bg-[#353534]" />
-                          <span className="text-[#353534] font-bold text-[10px] tracking-widest">ARCHIVED</span>
+                          <span className="text-[#353534] font-bold text-[10px] tracking-widest">INACTIVE</span>
                         </>
                       )}
                     </div>
@@ -327,7 +327,7 @@ export default function AdminCategoriesPage() {
       </div>
 
       {modalOpen && (
-        <ClassificationModal
+        <CategoryModal
           initial={editing}
           onClose={() => { setModalOpen(false); setEditing(null) }}
           onCommit={load}

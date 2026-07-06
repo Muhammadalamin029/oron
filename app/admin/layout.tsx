@@ -9,16 +9,16 @@ import { useAuth } from "@/contexts/auth-context"
 
 /* ── Breadcrumb map ── */
 const breadcrumbs: Record<string, string> = {
-  "/admin":              "SYSTEM / DASHBOARD",
-  "/admin/products":     "SYSTEM / PRODUCTS",
-  "/admin/categories":   "SYSTEM / CATEGORIES",
-  "/admin/orders":       "SYSTEM / ORDERS",
-  "/admin/customers":    "SYSTEM / CUSTOMERS",
-  "/admin/reviews":      "SYSTEM / REVIEWS",
-  "/admin/disputes":     "SYSTEM / DISPUTES",
-  "/admin/notifications":"SYSTEM / NOTIFICATIONS",
-  "/admin/support":      "SYSTEM / SUPPORT",
-  "/admin/settings":     "SYSTEM / SETTINGS",
+  "/admin":              "ADMIN / DASHBOARD",
+  "/admin/products":     "ADMIN / PRODUCTS",
+  "/admin/categories":   "ADMIN / CATEGORIES",
+  "/admin/orders":       "ADMIN / ORDERS",
+  "/admin/customers":    "ADMIN / CUSTOMERS",
+  "/admin/reviews":      "ADMIN / REVIEWS",
+  "/admin/disputes":     "ADMIN / DISPUTES",
+  "/admin/notifications":"ADMIN / NOTIFICATIONS",
+  "/admin/support":      "ADMIN / SUPPORT",
+  "/admin/settings":     "ADMIN / SETTINGS",
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [loading, isAuthenticated, isAdmin, router])
 
-  const crumb = breadcrumbs[pathname] || "SYSTEM / ADMIN"
+  const crumb = breadcrumbs[pathname] || "ADMIN"
   const initials = (user?.full_name || "AD")
     .split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
 
@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
         <div className="text-[#ff6b00] font-mono text-sm tracking-[0.2em] animate-pulse">
-          INITIALIZING SYSTEM...
+          INITIALIZING...
         </div>
       </div>
     )
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Watermark */}
       <div className="fixed bottom-4 right-4 z-0 pointer-events-none opacity-20">
         <span className="font-mono text-xs text-[#c6c6c6] tracking-[0.2em]">
-          SYS_VER: 2.0.4 // ENCRYPTED
+          
         </span>
       </div>
     </div>

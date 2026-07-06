@@ -34,7 +34,7 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
 }
 
 /* ── Status badge ── */
-function SignalStatus({ approved }: { approved: boolean | null }) {
+function ReviewStatus({ approved }: { approved: boolean | null }) {
   if (approved === true)
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -91,7 +91,7 @@ export default function AdminReviewsPage() {
   const handleApproval = async (id: string, approve: boolean) => {
     try {
       await reviewsApi.setApproval(id, approve)
-      toast.success(approve ? "Review approved — signal is LIVE" : "Review revoked")
+      toast.success(approve ? "Review approved" : "Review revoked")
       await load()
     } catch (err: any) {
       toast.error(err?.message || "Failed to update review")
@@ -103,13 +103,13 @@ export default function AdminReviewsPage() {
       {/* Header + search row */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
         <AdminPageHeader
-          title="SIGNAL QUALITY"
-          sub="/ REVIEWS"
+          title="REVIEWS"
+          sub="/ ALL REVIEWS"
         />
         <div className="relative w-full sm:w-72 flex-shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9a9898]" />
           <input
-            placeholder="Filter signal data..."
+            placeholder="Search reviews..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0) }}
             className="w-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#e5e2e1] pl-10 pr-4 py-2.5 rounded text-sm placeholder:text-[#353534] focus:outline-none focus:border-[#ff6b00] focus:ring-1 focus:ring-[#ff6b00] transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
@@ -126,7 +126,7 @@ export default function AdminReviewsPage() {
           <SkeletonRows count={6} height="h-20" />
         ) : filtered.length === 0 ? (
           <EmptyState
-            title="No signals found"
+            title="No reviews found"
             message="Try adjusting your search query."
             action={
               <OrangeButton onClick={() => setSearch("")}>CLEAR FILTER</OrangeButton>
@@ -139,12 +139,12 @@ export default function AdminReviewsPage() {
                 <thead>
                   <tr className="border-b border-white/5 bg-[#0a0a0a]/50">
                     {[
-                      "Customer Signal",
-                      "Product Hash",
-                      "Metric",
-                      "Transmission Data",
-                      "Status Code",
-                      "Action Protocol",
+                      "Customer",
+                      "Product ID",
+                      "Rating",
+                      "Review",
+                      "Status",
+                      "Actions",
                     ].map((h, i) => (
                       <th
                         key={h}
@@ -168,7 +168,7 @@ export default function AdminReviewsPage() {
                         r.is_approved === false && "opacity-90"
                       )}
                     >
-                      {/* Customer Signal */}
+                      {/* Customer */}
                       <td className="py-4 px-6 align-top">
                         <p className="font-semibold text-sm text-[#e5e2e1]">
                           {r.user?.full_name || "Unknown"}
@@ -178,7 +178,7 @@ export default function AdminReviewsPage() {
                         </p>
                       </td>
 
-                      {/* Product Hash */}
+                      {/* Product ID */}
                       <td className="py-4 px-6 align-top">
                         <span className="font-mono text-xs text-[#e2bfb0] bg-[#0a0a0a] px-2 py-1 rounded border border-[#1a1a1a]">
                           {r.product_id.slice(0, 10).toUpperCase()}
@@ -190,7 +190,7 @@ export default function AdminReviewsPage() {
                         <StarRating rating={r.rating} />
                       </td>
 
-                      {/* Transmission Data */}
+                      {/* Review Data */}
                       <td className="py-4 px-6 align-top w-1/3">
                         {r.title && (
                           <p className="font-bold text-sm text-white mb-1">{r.title}</p>
@@ -200,12 +200,12 @@ export default function AdminReviewsPage() {
                         )}
                       </td>
 
-                      {/* Status Code */}
+                      {/* Status */}
                       <td className="py-4 px-6 align-top">
-                        <SignalStatus approved={r.is_approved} />
+                        <ReviewStatus approved={r.is_approved} />
                       </td>
 
-                      {/* Action Protocol */}
+                      {/* Actions */}
                       <td className="py-4 px-6 align-top text-right">
                         {r.is_approved ? (
                           <button
@@ -232,7 +232,7 @@ export default function AdminReviewsPage() {
             {/* Pagination footer */}
             <div className="mt-auto border-t border-white/5 bg-[#0a0a0a]/80 px-6 py-4 flex justify-between items-center">
               <span className="font-mono text-xs text-[#9a9898]">
-                Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length} Signals
+                Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length} Reviews
               </span>
               <div className="flex gap-2">
                 <button

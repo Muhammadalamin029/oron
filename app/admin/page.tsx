@@ -93,7 +93,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <AdminPageHeader title="COMMAND CENTER" sub="/ LIVE DATA" />
+      <AdminPageHeader title="DASHBOARD" sub="/ OVERVIEW" />
 
       {/* KPI Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -136,9 +136,9 @@ export default function AdminDashboard() {
 
       {/* Data panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Transmissions */}
+        {/* Recent Orders */}
         <GlassCard className="lg:col-span-2 overflow-hidden">
-          <SectionHeader title="RECENT TRANSMISSIONS">
+          <SectionHeader title="RECENT ORDERS">
             <Link
               href="/admin/orders"
               className="px-4 py-1.5 border border-[#c6c6c6]/30 text-[#c6c6c6] hover:border-[#ff6b00] hover:text-[#ff6b00] transition-colors rounded text-[10px] font-bold tracking-widest uppercase"
@@ -180,9 +180,9 @@ export default function AdminDashboard() {
           )}
         </GlassCard>
 
-        {/* Top Assets */}
+        {/* Top Products */}
         <GlassCard className="flex flex-col">
-          <SectionHeader title="TOP ASSETS" sub="BY VOLUME (7 DAYS)" />
+          <SectionHeader title="TOP PRODUCTS" sub="BY VOLUME (7 DAYS)" />
 
           <div className="flex-1 p-4 flex flex-col gap-2">
             {loading ? (
