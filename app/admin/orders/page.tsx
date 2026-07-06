@@ -1,164 +1,218 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Search, Eye } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { shipmentsApi } from "@/services/shipments"
 import { toast } from "sonner"
+import { Search, Eye, X } from "lucide-react"
 import { adminApi } from "@/services/admin"
+import { shipmentsApi } from "@/services/shipments"
 import type { Order, User } from "@/types/api"
+import { formatNGN, formatDate, formatDateTime, buildUserMap } from "@/lib/admin-utils"
+import {
+  AdminPageHeader,
+  GlassCard,
+  StatusBadge,
+  SkeletonRows,
+  DarkInput,
+  OrangeButton,
+  CustomerCell,
+  EmptyState,
+} from "@/components/admin-ui"
+import { cn } from "@/lib/utils"
 
-const statuses = ["All", "pending", "paid", "processing", "shipped", "delivered", "cancelled"]
+const STATUSES = ["ALL", "PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]
+const SHIPMENT_STATUSES = ["label_created", "in_transit", "delivered"]
+const ORDER_STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]
 
-function ShipmentForm({
-  orderId,
-  onCreated,
+/* ── Order Detail Modal ── */
+function OrderModal({
+  order,
+  user,
+  onClose,
+  onUpdated,
 }: {
-  orderId: string
-  onCreated: () => Promise<void>
+  order: Order
+  user?: User
+  onClose: () => void
+  onUpdated: () => Promise<void>
 }) {
   const [carrier, setCarrier] = useState("")
   const [tracking, setTracking] = useState("")
-  const [status, setStatus] = useState("label_created")
-  const [creating, setCreating] = useState(false)
+  const [shipStatus, setShipStatus] = useState("label_created")
+  const [orderStatus, setOrderStatus] = useState((order.status || "pending").toLowerCase())
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleShipment = async () => {
+    try {
+      setSubmitting(true)
+      await shipmentsApi.createShipment({
+        order_id: order.id,
+        carrier,
+        tracking_number: tracking,
+        status: shipStatus,
+      })
+      toast.success("Shipment created")
+      setCarrier(""); setTracking(""); setShipStatus("label_created")
+      await onUpdated()
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create shipment")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleStatusUpdate = async (value: string) => {
+    try {
+      setOrderStatus(value)
+      await adminApi.updateOrderStatus(order.id, value)
+      toast.success("Order status updated")
+      await onUpdated()
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update status")
+    }
+  }
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm font-medium text-foreground">Create Shipment</p>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label>Carrier</Label>
-          <Input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="DHL" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#111111]/90 backdrop-blur-xl border border-white/5 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]/50">
+          <h3 className="font-display font-bold text-xl text-white tracking-tight">
+            ORDER{" "}
+            <span className="text-[#9a9898] font-mono text-base">/ #{order.id.slice(0, 12).toUpperCase()}</span>
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[#9a9898] hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-white/5"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        <div className="space-y-2">
-          <Label>Tracking</Label>
-          <Input value={tracking} onChange={(e) => setTracking(e.target.value)} placeholder="TRK123..." />
+
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto">
+          {/* Left info */}
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Customer</p>
+              <p className="font-bold text-white">{user?.full_name || "Customer"}</p>
+              <p className="text-sm text-[#9a9898]">{user?.email || order.user_id}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Date &amp; Time</p>
+              <p className="text-[#e5e2e1] text-sm">{formatDateTime(order.created_at)}</p>
+            </div>
+          </div>
+
+          {/* Right info */}
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Total Amount</p>
+              <p className="font-display font-bold text-2xl text-[#ff6b00]">{formatNGN(order.total_amount)}</p>
+            </div>
+            {order.shipping_info && (
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Shipping Address</p>
+                <p className="text-sm text-[#e5e2e1] leading-relaxed">
+                  {order.shipping_info.first_name} {order.shipping_info.last_name} • {order.shipping_info.phone}<br />
+                  {order.shipping_info.address}, {order.shipping_info.city} {order.shipping_info.state}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Itemized list */}
+          <div className="col-span-1 md:col-span-2 border border-white/5 rounded-lg overflow-hidden bg-[#0a0a0a]/30">
+            <div className="px-4 py-2 bg-[#0a0a0a] border-b border-white/5 text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase">
+              Items ({order.items?.length ?? 0})
+            </div>
+            <ul className="divide-y divide-white/5 p-4 space-y-1">
+              {order.items?.map((item) => (
+                <li key={item.id} className="flex justify-between items-center py-1.5">
+                  <span className="text-[#e5e2e1] text-sm">
+                    {item.product?.name || "Product"} × {item.quantity}
+                  </span>
+                  <span className="font-mono text-[#9a9898] text-sm">{formatNGN(item.price)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Create Shipment */}
+          <div className="col-span-1 md:col-span-2 pt-4 border-t border-white/5">
+            <h4 className="text-[10px] font-bold tracking-[0.2em] text-[#ff6b00] uppercase mb-4">
+              Create Shipment
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div>
+                <label className="block text-[10px] font-bold tracking-widest text-[#9a9898] uppercase mb-1.5">Carrier</label>
+                <input
+                  value={carrier}
+                  onChange={(e) => setCarrier(e.target.value)}
+                  placeholder="DHL, FedEx..."
+                  className="w-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#e5e2e1] placeholder:text-[#353534] px-3 py-2 rounded text-sm focus:outline-none focus:border-[#ff6b00] transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold tracking-widest text-[#9a9898] uppercase mb-1.5">Tracking ID</label>
+                <input
+                  value={tracking}
+                  onChange={(e) => setTracking(e.target.value)}
+                  placeholder="TRK-123..."
+                  className="w-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#e5e2e1] placeholder:text-[#353534] px-3 py-2 rounded text-sm focus:outline-none focus:border-[#ff6b00] transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold tracking-widest text-[#9a9898] uppercase mb-1.5">Shipment Status</label>
+                <select
+                  value={shipStatus}
+                  onChange={(e) => setShipStatus(e.target.value)}
+                  className="w-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#e5e2e1] px-3 py-2 rounded text-sm focus:outline-none focus:border-[#ff6b00] transition-all appearance-none"
+                >
+                  {SHIPMENT_STATUSES.map((s) => (
+                    <option key={s} value={s}>{s.replace("_", " ").toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Update order status */}
+          <div className="col-span-1 md:col-span-2 pt-2 border-t border-white/5">
+            <h4 className="text-[10px] font-bold tracking-[0.2em] text-[#ff6b00] uppercase mb-3">
+              Update Order Status
+            </h4>
+            <select
+              value={orderStatus}
+              onChange={(e) => handleStatusUpdate(e.target.value)}
+              className="w-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#e5e2e1] px-4 py-2.5 rounded text-sm focus:outline-none focus:border-[#ff6b00] transition-all appearance-none"
+            >
+              {ORDER_STATUSES.map((s) => (
+                <option key={s} value={s}>{s.toUpperCase()}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-4 border-t border-white/5 bg-[#0a0a0a]/80 flex justify-end">
+          <OrangeButton onClick={handleShipment} disabled={submitting || !carrier}>
+            {submitting ? "SUBMITTING..." : "SUBMIT UPDATE"}
+          </OrangeButton>
         </div>
       </div>
-      <div className="space-y-2">
-        <Label>Status</Label>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="label_created">label_created</SelectItem>
-            <SelectItem value="in_transit">in_transit</SelectItem>
-            <SelectItem value="delivered">delivered</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button
-        size="sm"
-        className="bg-primary text-primary-foreground"
-        disabled={creating}
-        onClick={async () => {
-          try {
-            setCreating(true)
-            await shipmentsApi.createShipment({
-              order_id: orderId,
-              carrier,
-              tracking_number: tracking,
-              status,
-            })
-            toast.success("Shipment created")
-            setCarrier("")
-            setTracking("")
-            setStatus("label_created")
-            await onCreated()
-          } catch (error: any) {
-            toast.error(error?.message || "Failed to create shipment")
-          } finally {
-            setCreating(false)
-          }
-        }}
-      >
-        {creating ? "Creating..." : "Create Shipment"}
-      </Button>
     </div>
   )
 }
 
+/* ── Main Page ── */
 export default function AdminOrdersPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedStatus, setSelectedStatus] = useState("All")
   const [orders, setOrders] = useState<Order[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [activeStatus, setActiveStatus] = useState("ALL")
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
-  const userById = useMemo(() => {
-    const map = new Map<string, User>()
-    for (const u of users) map.set(u.id, u)
-    return map
-  }, [users])
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
-
-  const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
-      const user = userById.get(order.user_id)
-      const customer = user?.full_name || user?.email || order.user_id
-      const matchesSearch =
-        customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.id.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus =
-        selectedStatus === "All" ||
-        (order.status || "").toLowerCase() === selectedStatus.toLowerCase()
-      return matchesSearch && matchesStatus
-    })
-  }, [orders, userById, searchQuery, selectedStatus])
-
-  const getStatusColor = (status: string) => {
-    switch ((status || "").toLowerCase()) {
-      case "paid":
-      case "completed":
-      case "success":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-      case "processing":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-      case "shipped":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-      case "pending":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-      case "cancelled":
-      case "canceled":
-      case "failed":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
-    }
-  }
+  const userById = useMemo(() => buildUserMap(users), [users])
 
   const load = async () => {
     const [ordersRes, usersRes] = await Promise.all([
@@ -175,257 +229,149 @@ export default function AdminOrdersPage() {
       try {
         setLoading(true)
         await load()
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load orders")
+      } catch (err: any) {
+        if (!cancelled) toast.error(err?.message || "Failed to load orders")
       } finally {
         if (!cancelled) setLoading(false)
       }
     })()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { cancelled = true }
   }, [])
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Orders</h1>
-        <p className="text-muted-foreground">
-          Manage and track customer orders
-        </p>
-      </div>
+  const filtered = useMemo(() => {
+    return orders.filter((o) => {
+      const u = userById.get(o.user_id)
+      const hay = `${o.id} ${u?.full_name || ""} ${u?.email || ""}`.toLowerCase()
+      const matchesSearch = hay.includes(search.toLowerCase())
+      const matchesStatus =
+        activeStatus === "ALL" ||
+        (o.status || "").toLowerCase() === activeStatus.toLowerCase()
+      return matchesSearch && matchesStatus
+    })
+  }, [orders, userById, search, activeStatus])
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search orders..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {statuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status === "All" ? "All" : status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+  return (
+    <>
+      <div className="space-y-6">
+        <AdminPageHeader title="ORDER MANIFEST" sub="/ ALL TRANSACTIONS" />
+
+        {/* Filter Bar */}
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <DarkInput
+            placeholder="Search orders, customers, IDs..."
+            value={search}
+            onChange={setSearch}
+            icon={<Search className="h-4 w-4" />}
+            className="w-full md:w-96"
+          />
+
+          {/* Status Pills */}
+          <div className="flex flex-wrap gap-2">
+            {STATUSES.map((s) => (
+              <button
+                key={s}
+                onClick={() => setActiveStatus(s)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all",
+                  activeStatus === s
+                    ? "bg-[#ff6b00] text-white"
+                    : "bg-[#0a0a0a] border border-[#1a1a1a] text-[#9a9898] hover:border-[#ff6b00] hover:text-[#ff6b00]"
+                )}
+              >
+                {s}
+              </button>
+            ))}
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+
+        {/* Table Panel */}
+        <GlassCard className="overflow-hidden">
           {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-12 rounded-md bg-muted/30 animate-pulse"
-                />
-              ))}
-            </div>
+            <SkeletonRows count={6} />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title="No orders found"
+              message="Try adjusting your search or status filter."
+              action={
+                <OrangeButton onClick={() => { setSearch(""); setActiveStatus("ALL") }}>
+                  CLEAR FILTERS
+                </OrangeButton>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.map((order) => {
-                    const user = userById.get(order.user_id)
-                    const itemCount = order.items?.reduce(
-                      (sum, item) => sum + item.quantity,
-                      0
-                    )
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 bg-[#0a0a0a]/50">
+                    {["TXN ID", "Date", "Customer", "Items", "NGN Total", "Status", "Action"].map((h, i) => (
+                      <th
+                        key={h}
+                        className={cn(
+                          "p-4 text-[10px] font-bold tracking-[0.15em] text-[#9a9898] uppercase font-normal",
+                          i === 6 && "text-center"
+                        )}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {filtered.map((order) => {
+                    const u = userById.get(order.user_id)
+                    const itemCount = order.items?.reduce((s, i) => s + i.quantity, 0) ?? 0
                     return (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id}</TableCell>
-                        <TableCell>
-                          {order.created_at
-                            ? new Date(order.created_at).toLocaleDateString(
-                                "en-NG"
-                              )
-                            : "—"}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">
-                              {user?.full_name || "Customer"}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {user?.email || order.user_id}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{itemCount ?? 0}</TableCell>
-                        <TableCell>{formatPrice(order.total_amount)}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}
+                      <tr
+                        key={order.id}
+                        onClick={() => setSelectedOrder(order)}
+                        className="border-l-2 border-transparent hover:border-[#ff6b00] hover:bg-white/[0.02] transition-all cursor-pointer group"
+                      >
+                        <td className="p-4 font-mono text-[#9a9898] text-xs truncate max-w-[110px]">
+                          #{order.id.slice(0, 10).toUpperCase()}
+                        </td>
+                        <td className="p-4 text-[#c6c6c6] text-sm whitespace-nowrap">
+                          {formatDate(order.created_at)}
+                        </td>
+                        <td className="p-4">
+                          <CustomerCell
+                            name={u?.full_name || "Customer"}
+                            email={u?.email || order.user_id}
+                          />
+                        </td>
+                        <td className="p-4 text-[#c6c6c6] text-sm">{itemCount}</td>
+                        <td className="p-4 font-display font-bold text-lg text-white">
+                          {formatNGN(order.total_amount)}
+                        </td>
+                        <td className="p-4">
+                          <StatusBadge status={order.status} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedOrder(order) }}
+                            className="text-[#9a9898] group-hover:text-[#ff6b00] transition-colors"
                           >
-                            {order.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>
-                                  Order Details - {order.id}
-                                </DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Customer
-                                    </p>
-                                    <p className="font-medium">
-                                      {user?.full_name || "Customer"}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Email
-                                    </p>
-                                    <p className="font-medium">
-                                      {user?.email || "—"}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Date
-                                    </p>
-                                    <p className="font-medium">
-                                      {order.created_at
-                                        ? new Date(
-                                            order.created_at
-                                          ).toLocaleString("en-NG")
-                                        : "—"}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Total
-                                    </p>
-                                    <p className="font-medium">
-                                      {formatPrice(order.total_amount)}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <p className="text-sm text-muted-foreground mb-2">
-                                    Items
-                                  </p>
-                                  <div className="space-y-2 text-sm">
-                                    {order.items?.map((item) => (
-                                      <div
-                                        key={item.id}
-                                        className="flex items-center justify-between"
-                                      >
-                                        <span>
-                                          {item.product?.name || "Product"} ×{" "}
-                                          {item.quantity}
-                                        </span>
-                                        <span className="text-muted-foreground">
-                                          {formatPrice(item.price)} each
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {order.shipping_info && (
-                                  <div>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      Shipping
-                                    </p>
-                                    <p className="text-sm">
-                                      {order.shipping_info.first_name}{" "}
-                                      {order.shipping_info.last_name} •{" "}
-                                      {order.shipping_info.phone}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {order.shipping_info.address},{" "}
-                                      {order.shipping_info.city}{" "}
-                                      {order.shipping_info.state}
-                                    </p>
-                                  </div>
-                                )}
-
-                                <ShipmentForm orderId={order.id} onCreated={load} />
-
-                                <div>
-                                  <p className="text-sm text-muted-foreground mb-2">
-                                    Update Status
-                                  </p>
-                                  <Select
-                                    value={(order.status || "").toLowerCase()}
-                                    onValueChange={async (value) => {
-                                      try {
-                                        await adminApi.updateOrderStatus(
-                                          order.id,
-                                          value
-                                        )
-                                        toast.success("Order status updated")
-                                        await load()
-                                      } catch (error: any) {
-                                        toast.error(
-                                          error?.message ||
-                                            "Failed to update status"
-                                        )
-                                      }
-                                    }}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {statuses
-                                        .filter((s) => s !== "All")
-                                        .map((status) => (
-                                          <SelectItem key={status} value={status}>
-                                            {status}
-                                          </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </TableCell>
-                      </TableRow>
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
                     )
                   })}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </GlassCard>
+      </div>
+
+      {/* Order Detail Modal */}
+      {selectedOrder && (
+        <OrderModal
+          order={selectedOrder}
+          user={userById.get(selectedOrder.user_id)}
+          onClose={() => setSelectedOrder(null)}
+          onUpdated={async () => { await load(); setSelectedOrder(null) }}
+        />
+      )}
+    </>
   )
 }

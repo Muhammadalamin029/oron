@@ -1,60 +1,33 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Users,
-  Settings,
-  LogOut,
-  Moon,
-  Sun,
-  Menu,
-  Watch,
-  MessageCircle,
-  Star,
-  AlertTriangle,
-  Bell,
-  FileText,
-  Mail,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { useRouter, usePathname } from "next/navigation"
+import { Bell, Terminal, User, Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useState, useEffect } from "react"
+import { AdminSidebar } from "@/components/admin-sidebar"
 import { useAuth } from "@/contexts/auth-context"
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/categories", label: "Categories", icon: Watch },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/notifications", label: "Notifications", icon: Bell },
-  { href: "/admin/reviews", label: "Reviews", icon: Star },
-  { href: "/admin/disputes", label: "Disputes", icon: AlertTriangle },
-  { href: "/admin/support", label: "Support", icon: MessageCircle },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/settings/policies", label: "Policies", icon: FileText },
-  { href: "/admin/settings/contact", label: "Contact", icon: Mail },
-]
+/* ── Breadcrumb map ── */
+const breadcrumbs: Record<string, string> = {
+  "/admin":              "SYSTEM / DASHBOARD",
+  "/admin/products":     "SYSTEM / PRODUCTS",
+  "/admin/categories":   "SYSTEM / CATEGORIES",
+  "/admin/orders":       "SYSTEM / ORDERS",
+  "/admin/customers":    "SYSTEM / CUSTOMERS",
+  "/admin/reviews":      "SYSTEM / REVIEWS",
+  "/admin/disputes":     "SYSTEM / DISPUTES",
+  "/admin/notifications":"SYSTEM / NOTIFICATIONS",
+  "/admin/support":      "SYSTEM / SUPPORT",
+  "/admin/settings":     "SYSTEM / SETTINGS",
+}
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { theme, setTheme } = useTheme()
-  const { user, loading, isAuthenticated, isAdmin, logout } = useAuth()
+  const { user, loading, isAuthenticated, isAdmin } = useAuth()
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || !isAdmin)) {
@@ -62,117 +35,83 @@ export default function AdminLayout({
     }
   }, [loading, isAuthenticated, isAdmin, router])
 
-  const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
-    <div
-      className={`flex flex-col h-full ${mobile ? "" : "w-64 border-r border-border"} bg-card`}
-    >
-      <div className="p-6 border-b border-border">
-        <Link href="/admin" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <Watch className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-serif text-xl text-card-foreground">ORON</h1>
-            <p className="text-xs text-muted-foreground">Admin Panel</p>
-          </div>
-        </Link>
-      </div>
+  const crumb = breadcrumbs[pathname] || "SYSTEM / ADMIN"
+  const initials = (user?.full_name || "AD")
+    .split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
 
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="font-medium">{item.label}</span>
-            </Link>
-          )
-        })}
-      </nav>
-
-      <div className="p-4 border-t border-border space-y-2">
-        {mounted && (
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3"
-          onClick={() => {
-            logout()
-            router.push("/auth/login")
-          }}
-        >
-          <LogOut className="h-5 w-5" />
-          <span>Logout</span>
-        </Button>
-        <Link href="/">
-          <Button variant="ghost" className="w-full justify-start gap-3">
-            <LogOut className="h-5 w-5" />
-            <span>Exit Admin</span>
-          </Button>
-        </Link>
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
+        <div className="text-[#ff6b00] font-mono text-sm tracking-[0.2em] animate-pulse">
+          INITIALIZING SYSTEM...
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <aside className="hidden md:block">
-        <Sidebar />
-      </aside>
+    <div className="min-h-screen bg-[#131313] text-[#e5e2e1] overflow-x-hidden">
+      {/* Atmospheric grid background */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
 
-      <div className="flex-1">
-        <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 md:px-6">
+      {/* Desktop sidebar */}
+      <div className="hidden md:block">
+        <AdminSidebar />
+      </div>
+
+      {/* Top header bar */}
+      <header className="fixed top-0 right-0 md:left-[240px] left-0 h-16 bg-[#131313]/70 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-40">
+        {/* Mobile: hamburger */}
+        <div className="flex items-center gap-4">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <button className="md:hidden text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
                 <Menu className="h-5 w-5" />
-              </Button>
+              </button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64">
-              <Sidebar mobile />
+            <SheetContent side="left" className="p-0 w-[240px] bg-[#0e0e0e] border-r border-white/5">
+              <AdminSidebar />
             </SheetContent>
           </Sheet>
 
-          <div className="flex items-center gap-4 ml-auto">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">
-                  {(user?.full_name || "Admin")
-                    .split(" ")
-                    .map((n) => n[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </span>
-              </div>
-              <span className="text-sm font-medium text-foreground hidden sm:block">
-                {user?.full_name || "Admin"}
-              </span>
-            </div>
-          </div>
-        </header>
+          {/* Breadcrumb */}
+          <span className="font-mono text-sm font-semibold text-[#9a9898] tracking-widest hidden sm:block">
+            {crumb}
+          </span>
+        </div>
 
-        <main className="p-4 md:p-6">{children}</main>
+        {/* Right actions */}
+        <div className="flex items-center gap-5">
+          <button className="text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
+            <Terminal className="h-5 w-5" />
+          </button>
+          <button className="relative text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#ff6b00] rounded-full" />
+          </button>
+          <div className="w-8 h-8 rounded-full bg-[#ff6b00]/10 border border-[#ff6b00]/30 flex items-center justify-center">
+            <span className="text-[#ff6b00] text-xs font-bold">{initials}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="relative z-10 md:ml-[240px] pt-16 min-h-screen">
+        <div className="p-6 md:p-8">{children}</div>
+      </main>
+
+      {/* Watermark */}
+      <div className="fixed bottom-4 right-4 z-0 pointer-events-none opacity-20">
+        <span className="font-mono text-xs text-[#c6c6c6] tracking-[0.2em]">
+          SYS_VER: 2.0.4 // ENCRYPTED
+        </span>
       </div>
     </div>
   )

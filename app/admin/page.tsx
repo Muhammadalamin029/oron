@@ -2,15 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Package,
-  ShoppingCart,
-  Users,
-  DollarSign,
-} from "lucide-react"
+import Link from "next/link"
+import { Wallet, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
 import { adminApi } from "@/services/admin"
 import type { Order, User } from "@/types/api"
+import { cn } from "@/lib/utils"
+import { formatNGN, buildUserMap } from "@/lib/admin-utils"
+import {
+  AdminPageHeader,
+  GlassCard,
+  SectionHeader,
+  SkeletonRows,
+  StatusBadge,
+} from "@/components/admin-ui"
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -23,64 +27,38 @@ export default function AdminDashboard() {
     total_customers: 0,
   })
 
-  const userById = useMemo(() => {
-    const map = new Map<string, User>()
-    for (const u of users) map.set(u.id, u)
-    return map
-  }, [users])
+  const userById = useMemo(() => buildUserMap(users), [users])
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
-
-  const recentOrders = useMemo(() => {
-    return [...orders]
+  const recentOrders = useMemo(() =>
+    [...orders]
       .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
       .slice(0, 5)
-      .map((order) => {
-        const user = userById.get(order.user_id)
-        const firstItem = order.items?.[0]?.product?.name
+      .map((o) => {
+        const u = userById.get(o.user_id)
         return {
-          id: order.id,
-          customer: user?.full_name || user?.email || order.user_id,
-          product: firstItem || "—",
-          amount: formatPrice(order.total_amount),
-          status: order.status,
+          id: o.id,
+          customer: u?.full_name || "Customer",
+          email: u?.email || o.user_id,
+          product: o.items?.[0]?.product?.name || "—",
+          amount: formatNGN(o.total_amount),
+          status: o.status || "pending",
         }
-      })
-  }, [orders, userById])
+      }),
+  [orders, userById])
 
   const topProducts = useMemo(() => {
-    const acc = new Map<
-      string,
-      { name: string; sales: number; revenue: number }
-    >()
-
-    for (const order of orders) {
-      const status = (order.status || "").toLowerCase()
-      if (!["paid", "completed", "success", "delivered", "shipped"].includes(status))
-        continue
-      for (const item of order.items || []) {
+    const acc = new Map<string, { name: string; sales: number }>()
+    for (const o of orders) {
+      const status = (o.status || "").toLowerCase()
+      if (!["paid", "completed", "success", "delivered", "shipped"].includes(status)) continue
+      for (const item of o.items || []) {
         const name = item.product?.name || "Product"
-        const current = acc.get(name) || { name, sales: 0, revenue: 0 }
-        current.sales += item.quantity
-        current.revenue += item.price * item.quantity
-        acc.set(name, current)
+        const cur = acc.get(name) || { name, sales: 0 }
+        cur.sales += item.quantity
+        acc.set(name, cur)
       }
     }
-
-    return Array.from(acc.values())
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 4)
-      .map((p) => ({
-        name: p.name,
-        sales: p.sales,
-        revenue: formatPrice(p.revenue),
-      }))
+    return Array.from(acc.values()).sort((a, b) => b.sales - a.sales).slice(0, 4)
   }, [orders])
 
   useEffect(() => {
@@ -97,139 +75,152 @@ export default function AdminDashboard() {
         setStats(statsRes)
         setOrders(ordersRes)
         setUsers(usersRes)
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load dashboard")
+      } catch (err: any) {
+        if (!cancelled) toast.error(err?.message || "Failed to load dashboard")
       } finally {
         if (!cancelled) setLoading(false)
       }
     })()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [])
 
+  const kpis = [
+    { label: "TOTAL REVENUE",    value: loading ? "—" : formatNGN(stats.total_revenue),     icon: Wallet,       highlight: true,  live: false },
+    { label: "ACTIVE ORDERS",    value: loading ? "—" : String(stats.total_orders),          icon: ShoppingCart, highlight: false, live: true  },
+    { label: "CATALOG SIZE",     value: loading ? "—" : String(stats.total_products),        icon: Package,      highlight: false, live: false },
+    { label: "TOTAL CUSTOMERS",  value: loading ? "—" : String(stats.total_customers),       icon: Users,        highlight: false, live: false },
+  ]
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening with your store.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <AdminPageHeader title="COMMAND CENTER" sub="/ LIVE DATA" />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[
-          { title: "Total Revenue", value: formatPrice(stats.total_revenue), icon: DollarSign },
-          { title: "Orders", value: String(stats.total_orders), icon: ShoppingCart },
-          { title: "Products", value: String(stats.total_products), icon: Package },
-          { title: "Customers", value: String(stats.total_customers), icon: Users },
-        ].map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground">
-                {loading ? "—" : stat.value}
+      {/* KPI Row */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpis.map((kpi, i) => (
+          <GlassCard
+            key={i}
+            className={cn(
+              "p-6 flex flex-col justify-between transition-colors duration-300 hover:border-[#ff6b00]/40",
+              i === 1 && "border-l-2 border-l-[#ff6b00] !pl-5"
+            )}
+          >
+            <div className="flex justify-between items-start mb-5">
+              <span className="text-[10px] font-bold tracking-[0.18em] text-[#9a9898] uppercase">
+                {kpi.label}
+              </span>
+              <div className="flex items-center gap-2">
+                {kpi.live && (
+                  <div className="flex items-center gap-1.5 bg-[#201f1f] border border-[#353534] px-2 py-1 rounded">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#ff6b00] animate-pulse" />
+                    <span className="text-[9px] font-bold text-[#e5e2e1] tracking-widest">LIVE</span>
+                  </div>
+                )}
+                <kpi.icon className="h-4 w-4 text-[#9a9898]" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div>
+              <span className={cn("font-display font-bold text-3xl block", kpi.highlight ? "text-[#ff6b00]" : "text-white")}>
+                {kpi.value}
+              </span>
+              {kpi.highlight && !loading && (
+                <p className="text-sm text-[#c6c6c6] mt-1.5 flex items-center gap-1">
+                  <TrendingUp className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
+                  Revenue tracked
+                </p>
+              )}
+            </div>
+          </GlassCard>
         ))}
-      </div>
+      </section>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {loading
-                ? Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-14 rounded-md bg-muted/30 animate-pulse"
-                    />
-                  ))
-                : recentOrders.map((order) => (
+      {/* Data panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Transmissions */}
+        <GlassCard className="lg:col-span-2 overflow-hidden">
+          <SectionHeader title="RECENT TRANSMISSIONS">
+            <Link
+              href="/admin/orders"
+              className="px-4 py-1.5 border border-[#c6c6c6]/30 text-[#c6c6c6] hover:border-[#ff6b00] hover:text-[#ff6b00] transition-colors rounded text-[10px] font-bold tracking-widest uppercase"
+            >
+              VIEW ALL
+            </Link>
+          </SectionHeader>
+
+          {loading ? (
+            <SkeletonRows count={5} />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5">
+                    {["Order ID", "Customer", "Product", "Amount (NGN)", "Status"].map((h) => (
+                      <th key={h} className="py-3 px-4 text-[10px] font-bold tracking-[0.15em] text-[#9a9898] uppercase font-normal">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {recentOrders.map((o) => (
+                    <tr key={o.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-4 px-4 font-mono text-[#c6c6c6] text-xs">#{o.id.slice(0, 10).toUpperCase()}</td>
+                      <td className="py-4 px-4">
+                        <p className="text-white font-semibold text-sm">{o.customer}</p>
+                        <p className="text-[#9a9898] text-xs">{o.email}</p>
+                      </td>
+                      <td className="py-4 px-4 text-[#c6c6c6] text-sm">{o.product}</td>
+                      <td className="py-4 px-4 font-mono text-white text-sm font-bold">{o.amount}</td>
+                      <td className="py-4 px-4"><StatusBadge status={o.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GlassCard>
+
+        {/* Top Assets */}
+        <GlassCard className="flex flex-col">
+          <SectionHeader title="TOP ASSETS" sub="BY VOLUME (7 DAYS)" />
+
+          <div className="flex-1 p-4 flex flex-col gap-2">
+            {loading ? (
+              <SkeletonRows count={4} height="h-16" />
+            ) : topProducts.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-[#9a9898] text-sm">No data yet</div>
+            ) : (
+              topProducts.map((p, i) => (
                 <div
-                  key={order.id}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
+                  key={p.name}
+                  className="flex items-center gap-3 p-3 bg-[#201f1f]/40 rounded border border-transparent hover:border-[#ff6b00]/30 transition-colors cursor-pointer group"
                 >
-                  <div>
-                    <p className="font-medium text-card-foreground">
-                      {order.customer}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {order.product}
-                    </p>
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs font-bold",
+                    i === 0
+                      ? "bg-[#ff6b00]/10 border border-[#ff6b00] text-[#ff6b00]"
+                      : "bg-[#353534] border border-[#353534] text-[#c6c6c6]"
+                  )}>
+                    {String(i + 1).padStart(2, "0")}
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-card-foreground">
-                      {order.amount}
-                    </p>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        (order.status || "").toLowerCase() === "paid" ||
-                        (order.status || "").toLowerCase() === "completed" ||
-                        (order.status || "").toLowerCase() === "success"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : (order.status || "").toLowerCase() === "processing"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            : (order.status || "").toLowerCase() === "shipped"
-                              ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm truncate group-hover:text-[#ff6b00] transition-colors">{p.name}</p>
+                    <p className="text-[#9a9898] text-xs font-mono">{p.sales} UNITS</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              ))
+            )}
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {loading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-12 rounded-md bg-muted/30 animate-pulse"
-                    />
-                  ))
-                : topProducts.map((product, index) => (
-                <div
-                  key={product.name}
-                  className="flex items-center gap-4 py-2 border-b border-border last:border-0"
-                >
-                  <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-medium text-card-foreground">
-                      {product.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {product.sales} sales
-                    </p>
-                  </div>
-                  <p className="font-medium text-card-foreground">
-                    {product.revenue}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+          <div className="p-4 border-t border-white/5">
+            <Link
+              href="/admin/products"
+              className="block w-full text-center py-3 bg-[#ff6b00] text-white font-bold text-[10px] tracking-[0.2em] uppercase rounded hover:bg-[#ff8533] transition-all active:scale-95"
+            >
+              ANALYZE TRENDS
+            </Link>
+          </div>
+        </GlassCard>
       </div>
     </div>
   )
