@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { Order, Product, User } from '@/types/api';
+import { Order, Product, User, Dispute } from '@/types/api';
 
 export interface DashboardStats {
   total_revenue: number;
@@ -14,8 +14,23 @@ export const adminApi = {
     return response.data;
   },
 
+  getAllOrdersWithUsers: async (): Promise<(Order & { user?: User })[]> => {
+    const response = await apiClient.get<(Order & { user?: User })[]>('/admin/orders');
+    return response.data;
+  },
+
   getUsers: async (): Promise<User[]> => {
     const response = await apiClient.get<User[]>('/auth/users');
+    return response.data;
+  },
+
+  getUsersWithStats: async (): Promise<(User & { total_orders?: number; total_spent?: number })[]> => {
+    const response = await apiClient.get<(User & { total_orders?: number; total_spent?: number })[]>('/admin/users/stats');
+    return response.data;
+  },
+
+  getDisputesWithDetails: async (): Promise<(Dispute & { user?: User; order?: Order })[]> => {
+    const response = await apiClient.get<(Dispute & { user?: User; order?: Order })[]>('/admin/disputes');
     return response.data;
   },
 
@@ -29,23 +44,7 @@ export const adminApi = {
   },
 
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const [ordersRes, productsRes, usersRes] = await Promise.all([
-      apiClient.get<Order[]>('/orders/'),
-      apiClient.get<Product[]>('/products/'),
-      apiClient.get<User[]>('/auth/users'),
-    ]);
-
-    const orders = ordersRes.data || [];
-    const products = productsRes.data || [];
-    const users = usersRes.data || [];
-
-    return {
-      total_revenue: orders
-        .filter((o) => ['paid', 'completed', 'success', 'shipped', 'delivered'].includes((o.status || '').toLowerCase()))
-        .reduce((sum, o) => sum + o.total_amount, 0),
-      total_orders: orders.length,
-      total_products: products.length,
-      total_customers: users.filter((u) => !u.is_admin).length,
-    };
+    const response = await apiClient.get<DashboardStats>('/admin/stats');
+    return response.data;
   }
 };

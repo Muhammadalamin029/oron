@@ -14,60 +14,13 @@ import {
   EmptyState,
 } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
-
-/* ── Customer status badge ── */
-function CustomerStatus({ verified, orderCount }: { verified?: boolean; orderCount: number }) {
-  if (!verified)
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#3a3939]/50 border border-[#3a3939] text-[#9a9898] text-[10px] font-bold tracking-[0.15em] uppercase">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#9a9898]" />
-        Unverified
-      </span>
-    )
-  if (orderCount > 0)
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#3a3939]/50 border border-[#3a3939] text-[#e5e2e1] text-[10px] font-bold tracking-[0.15em] uppercase">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]" />
-        Active
-      </span>
-    )
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#3a3939]/50 border border-[#3a3939] text-[#9a9898] text-[10px] font-bold tracking-[0.15em] uppercase">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#ff6b00] shadow-[0_0_5px_rgba(255,107,0,0.8)]" />
-      Idle
-    </span>
-  )
-}
-
-/* ── Avatar circle ── */
-function CustomerAvatar({ name, hasOrders }: { name: string; hasOrders: boolean }) {
-  const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
-  return (
-    <div
-      className={cn(
-        "w-10 h-10 rounded-full bg-[#0a0a0a] flex items-center justify-center flex-shrink-0 border",
-        hasOrders
-          ? "border-[#ff6b00] shadow-[0_0_10px_rgba(255,107,0,0.2)]"
-          : "border-[#3a3939]"
-      )}
-    >
-      <span
-        className={cn(
-          "text-sm font-bold",
-          hasOrders ? "text-[#ff6b00]" : "text-[#9a9898]"
-        )}
-      >
-        {initials}
-      </span>
-    </div>
-  )
-}
+import { CustomerStatus } from "./components/CustomerStatus"
+import { CustomerAvatar } from "./components/CustomerAvatar"
 
 const PAGE_SIZE = 15
 
 export default function AdminCustomersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
+  const [users, setUsers] = useState<(User & { total_orders?: number; total_spent?: number })[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(0)
@@ -77,13 +30,9 @@ export default function AdminCustomersPage() {
     ;(async () => {
       try {
         setLoading(true)
-        const [usersRes, ordersRes] = await Promise.all([
-          adminApi.getUsers(),
-          adminApi.getAllOrders(),
-        ])
+        const usersRes = await adminApi.getUsersWithStats()
         if (cancelled) return
         setUsers(usersRes)
-        setOrders(ordersRes)
       } catch (err: any) {
         if (!cancelled) toast.error(err?.message || "Failed to load customers")
       } finally {
@@ -92,18 +41,6 @@ export default function AdminCustomersPage() {
     })()
     return () => { cancelled = true }
   }, [])
-
-  /* Build per-user stats */
-  const stats = useMemo(() => {
-    const map = new Map<string, { count: number; spent: number }>()
-    for (const o of orders) {
-      const cur = map.get(o.user_id) || { count: 0, spent: 0 }
-      cur.count += 1
-      if (isPaidStatus(o.status || "")) cur.spent += o.total_amount
-      map.set(o.user_id, cur)
-    }
-    return map
-  }, [orders])
 
   /* Filter to non-admin users, search */
   const filtered = useMemo(() =>
@@ -189,8 +126,9 @@ export default function AdminCustomersPage() {
                 </thead>
                 <tbody className="divide-y divide-[#1a1a1a]">
                   {paginated.map((u) => {
-                    const s = stats.get(u.id) || { count: 0, spent: 0 }
-                    const hasOrders = s.count > 0
+                    const count = u.total_orders || 0
+                    const spent = u.total_spent || 0
+                    const hasOrders = count > 0
                     return (
                       <tr
                         key={u.id}
@@ -211,18 +149,18 @@ export default function AdminCustomersPage() {
 
                         {/* Status */}
                         <td className="px-6 py-4">
-                          <CustomerStatus verified={u.is_verified} orderCount={s.count} />
+                          <CustomerStatus verified={u.is_verified} orderCount={count} />
                         </td>
 
                         {/* Orders count */}
                         <td className="px-6 py-4 text-right font-mono text-[#c6c6c6] text-sm">
-                          {s.count.toLocaleString()}
+                          {count.toLocaleString()}
                         </td>
 
                         {/* Value */}
                         <td className="px-6 py-4 text-right">
                           <span className="font-display font-bold text-base text-white">
-                            {s.spent > 0 ? formatNGN(s.spent) : "—"}
+                            {spent > 0 ? formatNGN(spent) : "—"}
                           </span>
                         </td>
 

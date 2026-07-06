@@ -102,7 +102,7 @@ export default function AdminSettingsPage() {
         .filter(Boolean) as { key: string; value: string }[]
 
       await Promise.all(
-        updates.map((u) => settingsApi.updateSetting(u.key, u.value))
+        updates.map((u) => settingsApi.updateSetting(u.key, { value: u.value }))
       )
 
       const nextInitial = { ...initialMap }

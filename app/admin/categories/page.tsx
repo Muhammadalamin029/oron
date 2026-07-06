@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { Search, Plus, Pencil, Trash2, X, CheckSquare } from "lucide-react"
 import { categoriesApi } from "@/services/categories"
-import { productsApi } from "@/services/products"
-import type { Category, Product } from "@/types/api"
+import type { Category } from "@/types/api"
 import {
   AdminPageHeader,
   GlassCard,
@@ -150,22 +149,11 @@ function CategoryModal({
 
 /* ── Main Page ── */
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<(Category & { product_count?: number })[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
-
-  /* Product count per category */
-  const productCountById = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const p of products) {
-      if (!p.category_id) continue
-      map.set(p.category_id, (map.get(p.category_id) || 0) + 1)
-    }
-    return map
-  }, [products])
 
   const filtered = useMemo(() =>
     categories.filter((c) =>
@@ -174,12 +162,8 @@ export default function AdminCategoriesPage() {
   [categories, search])
 
   const load = async () => {
-    const [cats, prods] = await Promise.all([
-      categoriesApi.list(),
-      productsApi.getProducts(),
-    ])
+    const cats = await categoriesApi.getCategoriesWithStats()
     setCategories(cats)
-    setProducts(prods)
   }
 
   useEffect(() => {
@@ -264,7 +248,7 @@ export default function AdminCategoriesPage() {
           ) : (
             <div className="flex-1 overflow-y-auto">
               {filtered.map((cat) => {
-                const count = productCountById.get(cat.id) || 0
+                const count = cat.product_count || 0
                 const isLive = count > 0
                 return (
                   <div

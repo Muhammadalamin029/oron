@@ -12,6 +12,11 @@ export const categoriesApi = {
     return response.data;
   },
 
+  getCategoriesWithStats: async (): Promise<(Category & { product_count: number })[]> => {
+    const response = await apiClient.get<(Category & { product_count: number })[]>('/categories/with-stats');
+    return response.data;
+  },
+
   create: async (categoryData: { name: string; description?: string }): Promise<Category> => {
     const response = await apiClient.post<Category>('/categories/', categoryData);
     return response.data;
