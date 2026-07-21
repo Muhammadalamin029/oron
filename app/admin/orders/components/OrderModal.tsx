@@ -10,7 +10,9 @@ import { OrangeButton } from "@/components/admin-ui";
 const SHIPMENT_STATUSES = ["label_created", "in_transit", "delivered"];
 const ORDER_STATUSES = [
   "pending",
+  "unpaid",
   "paid",
+  "expired",
   "processing",
   "shipped",
   "delivered",

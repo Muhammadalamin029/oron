@@ -10,6 +10,7 @@ interface AuthContextType {
   setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, fullName: string, password: string) => Promise<User>;
+  applySession: (authResponse: AuthResponse) => void;
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
@@ -75,15 +76,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const applySession = (authResponse: AuthResponse) => {
+    setUser(authResponse.user);
+    setToken(authResponse.access_token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('access_token', authResponse.access_token);
+      localStorage.setItem('refresh_token', authResponse.refresh_token);
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       const authResponse: AuthResponse = await authApi.login({ email, password });
-      setUser(authResponse.user);
-      setToken(authResponse.access_token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', authResponse.access_token);
-        localStorage.setItem('refresh_token', authResponse.refresh_token);
-      }
+      applySession(authResponse);
       return authResponse.user;
     } catch (error) {
       throw error;
@@ -121,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser,
     login,
     register,
+    applySession,
     logout,
     loading,
     isAuthenticated: !!user && !!token,

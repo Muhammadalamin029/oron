@@ -28,6 +28,7 @@ import OrderModal from "./components/OrderModal";
 const STATUSES = [
   "ALL",
   "PENDING",
+  "UNPAID",
   "PAID",
   "PROCESSING",
   "SHIPPED",

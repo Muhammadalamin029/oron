@@ -70,6 +70,10 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface SetPasswordResponse extends AuthResponse {
+  order_id: string;
+}
+
 // Order types
 export interface Order {
   id: string;
@@ -98,6 +102,20 @@ export interface OrderCreate {
     product_id: string;
     quantity: number;
   }[];
+}
+
+export interface GuestCheckoutRequest {
+  items: {
+    product_id: string;
+    quantity: number;
+  }[];
+  shipping: Omit<OrderShippingInfo, "id" | "order_id" | "created_at" | "updated_at">;
+}
+
+export interface GuestCheckoutResponse {
+  order_id: string;
+  email: string;
+  message: string;
 }
 
 // API Response types
@@ -219,8 +237,38 @@ export interface Payment {
   status: string;
   provider: string;
   reference: string;
+  method?: string;
+  bank_name?: string | null;
+  account_number?: string | null;
+  account_name?: string | null;
+  expires_at?: string | null;
   created_at: string;
   order?: Order;
+}
+
+export interface ChargeInitiateResponse {
+  payment_id: string;
+  order_id: string;
+  reference: string;
+  status: string;
+  amount: number;
+  bank_name?: string | null;
+  account_number?: string | null;
+  account_name?: string | null;
+  expires_at?: string | null;
+}
+
+export interface PaymentStatusResponse {
+  order_id: string;
+  payment_id?: string | null;
+  payment_status: string;
+  order_status: string;
+  amount?: number | null;
+  bank_name?: string | null;
+  account_number?: string | null;
+  account_name?: string | null;
+  expires_at?: string | null;
+  seconds_remaining?: number | null;
 }
 
 // Notifications

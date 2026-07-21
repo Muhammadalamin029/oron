@@ -9,7 +9,8 @@ import { Footer } from "@/components/footer"
 import { useCart } from "@/lib/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { ordersApi } from "@/services/orders"
-import { paymentsApi } from "@/services/payments"
+import { checkoutApi } from "@/services/checkout"
+import { ApiError } from "@/lib/api"
 import { toast } from "sonner"
 import {
   ShieldCheck,
@@ -17,6 +18,7 @@ import {
   ArrowRight,
   ChevronLeft,
   Lock,
+  Mail,
 } from "lucide-react"
 
 const NIGERIAN_STATES = [
@@ -39,6 +41,8 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart()
   const { user, isAuthenticated } = useAuth()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [guestConfirmation, setGuestConfirmation] = useState<{ email: string } | null>(null)
+  const [emailConflict, setEmailConflict] = useState(false)
 
   const [formData, setFormData] = useState({
     email: "",
@@ -80,34 +84,110 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isAuthenticated) {
-      router.push(`/auth/login?next=${encodeURIComponent("/checkout")}`)
-      return
-    }
+    setEmailConflict(false)
     setIsProcessing(true)
     try {
-      const order = await ordersApi.createOrder({
+      if (isAuthenticated) {
+        const order = await ordersApi.createOrder({
+          items: items.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity,
+          })),
+        })
+        await ordersApi.upsertShippingInfo(order.id, {
+          email: formData.email,
+          phone: formData.phone,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          country: "Nigeria",
+        })
+        clearCart()
+        router.push(`/orders/${order.id}`)
+        return
+      }
+
+      const result = await checkoutApi.guestCheckout({
         items: items.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
         })),
+        shipping: {
+          email: formData.email,
+          phone: formData.phone,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          country: "Nigeria",
+        },
       })
-      await ordersApi.upsertShippingInfo(order.id, {
-        email: formData.email,
-        phone: formData.phone,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        country: "Nigeria",
-      })
-      const payment = await paymentsApi.initializePayment({ order_id: order.id })
-      window.location.href = payment.authorization_url
+      clearCart()
+      setGuestConfirmation({ email: result.email })
     } catch (error: any) {
-      toast.error(error?.message || "Checkout failed")
+      if (error instanceof ApiError && error.status === 409) {
+        setEmailConflict(true)
+      } else {
+        toast.error(error?.message || "Checkout failed")
+      }
+    } finally {
       setIsProcessing(false)
     }
+  }
+
+  /* ── Guest checkout: check-your-email confirmation ── */
+  if (guestConfirmation) {
+    return (
+      <div className="min-h-screen bg-[#131313]">
+        <Header />
+        <main className="max-w-[1280px] mx-auto px-6 pt-32 pb-24 flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-full bg-[#ff6b00]/10 flex items-center justify-center mb-6">
+            <Mail className="h-7 w-7 text-[#ff6b00]" />
+          </div>
+          <h1 className="font-display font-bold text-4xl text-white mb-4">
+            Check Your Email
+          </h1>
+          <p className="text-[#9a9898] max-w-md mb-10">
+            We've sent a link to <span className="text-white font-semibold">{guestConfirmation.email}</span>{" "}
+            to verify your email and set a password. Once you do, you&apos;ll be taken straight to your order.
+          </p>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 bg-[#ff6b00] text-white font-bold text-sm tracking-widest px-8 py-4 rounded-full glow-hover transition-all active:scale-95"
+          >
+            CONTINUE SHOPPING <ArrowRight className="h-4 w-4" />
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  /* ── Guest checkout: email already has an account ── */
+  if (emailConflict) {
+    return (
+      <div className="min-h-screen bg-[#131313]">
+        <Header />
+        <main className="max-w-[1280px] mx-auto px-6 pt-32 pb-24 flex flex-col items-center text-center">
+          <h1 className="font-display font-bold text-4xl text-white mb-4">
+            Account Already Exists
+          </h1>
+          <p className="text-[#9a9898] max-w-md mb-10">
+            An account already exists for {formData.email || "this email"}. Log in to continue checking out.
+          </p>
+          <Link
+            href={`/auth/login?next=${encodeURIComponent("/checkout")}`}
+            className="inline-flex items-center gap-2 bg-[#ff6b00] text-white font-bold text-sm tracking-widest px-8 py-4 rounded-full glow-hover transition-all active:scale-95"
+          >
+            LOG IN TO CONTINUE <ArrowRight className="h-4 w-4" />
+          </Link>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   /* ── Empty cart guard ── */
@@ -348,7 +428,9 @@ export default function CheckoutPage() {
                   <span className="font-display font-bold text-xl text-white">Paystack</span>
                 </div>
                 <p className="text-sm text-[#9a9898] leading-relaxed">
-                  You will be redirected to Paystack&apos;s secure terminal to complete your transaction using Card, Bank, or Transfer.
+                  {isAuthenticated
+                    ? "We'll generate a dedicated bank account number on your order page — transfer the exact amount to complete your purchase."
+                    : "After this step, verify your email to unlock a dedicated bank account number for your payment."}
                 </p>
               </div>
 
@@ -386,7 +468,7 @@ export default function CheckoutPage() {
                   </>
                 ) : (
                   <>
-                    PAY SECURELY
+                    {isAuthenticated ? "PLACE ORDER" : "CONTINUE"}
                     <Zap className="h-4 w-4" />
                   </>
                 )}

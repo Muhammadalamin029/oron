@@ -40,8 +40,8 @@ export default function OrdersPage() {
     return (status: string) => {
       const s = (status || "").toLowerCase()
       if (s === "paid" || s === "completed" || s === "success") return "default"
-      if (s === "pending") return "secondary"
-      if (s === "cancelled" || s === "canceled" || s === "failed")
+      if (s === "pending" || s === "unpaid") return "secondary"
+      if (s === "cancelled" || s === "canceled" || s === "failed" || s === "expired")
         return "destructive"
       return "outline"
     }

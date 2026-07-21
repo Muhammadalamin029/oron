@@ -43,6 +43,8 @@ export const statusConfig: Record<string, StatusConfig> = {
   processing:   { dot: "bg-amber-400 animate-pulse",                           badge: "border-amber-900 bg-amber-900/20 text-amber-400",     label: "PROCESSING"   },
   shipped:      { dot: "bg-purple-400",                                         badge: "border-purple-900 bg-purple-900/20 text-purple-400", label: "SHIPPED"      },
   pending:      { dot: "bg-yellow-400",                                         badge: "border-yellow-900 bg-yellow-900/20 text-yellow-400", label: "PENDING"      },
+  unpaid:       { dot: "bg-yellow-400",                                         badge: "border-yellow-900 bg-yellow-900/20 text-yellow-400", label: "UNPAID"       },
+  expired:      { dot: "bg-red-400",                                            badge: "border-red-900 bg-red-900/20 text-red-400",          label: "EXPIRED"      },
   cancelled:    { dot: "bg-red-400",                                            badge: "border-red-900 bg-red-900/20 text-red-400",          label: "CANCELLED"    },
   canceled:     { dot: "bg-red-400",                                            badge: "border-red-900 bg-red-900/20 text-red-400",          label: "CANCELLED"    },
   failed:       { dot: "bg-red-400",                                            badge: "border-red-900 bg-red-900/20 text-red-400",          label: "FAILED"       },

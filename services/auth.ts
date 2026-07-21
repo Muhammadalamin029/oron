@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api';
-import { User, UserCreate, UserLogin, AuthResponse } from '@/types/api';
+import { User, UserCreate, UserLogin, AuthResponse, SetPasswordResponse } from '@/types/api';
 
 export const authApi = {
   // Register a new user
@@ -27,6 +27,11 @@ export const authApi = {
 
   verifyEmail: async (token: string): Promise<{ msg: string }> => {
     const response = await apiClient.get<{ msg: string }>(`/auth/verify-email`, { token });
+    return response.data;
+  },
+
+  setPassword: async (token: string, password: string): Promise<SetPasswordResponse> => {
+    const response = await apiClient.post<SetPasswordResponse>('/auth/set-password', { token, password });
     return response.data;
   },
 
