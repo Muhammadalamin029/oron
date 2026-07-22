@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { Eye, EyeOff, Watch } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { getPasswordError } from "@/lib/validation"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -26,6 +27,12 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const passwordError = getPasswordError(formData.password)
+    if (passwordError) {
+      toast.error(passwordError)
+      return
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match")

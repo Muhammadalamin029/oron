@@ -40,6 +40,7 @@ export default function OrderDetailPage() {
   const [fetching, setFetching] = useState(true)
   const [payment, setPayment] = useState<PaymentStatusResponse | null>(null)
   const [initiating, setInitiating] = useState(false)
+  const [verifying, setVerifying] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -129,6 +130,27 @@ export default function OrderDetailPage() {
   }, [payment?.payment_status])
 
   useEffect(() => stopPolling, [stopPolling])
+
+  const verifyPayment = useCallback(async () => {
+    try {
+      setVerifying(true)
+      const status = await paymentsApi.verifyPayment(params.id)
+      setPayment(status)
+      if (status.order_status === "paid") {
+        stopPolling()
+        setOrder((prev) => (prev ? { ...prev, status: "paid" } : prev))
+        toast.success("Payment confirmed!")
+      } else if (status.payment_status === "failed") {
+        toast.error("We couldn't confirm this transfer. Please contact support if you already sent it.")
+      } else {
+        toast("Still checking — we'll keep polling automatically.")
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to verify payment")
+    } finally {
+      setVerifying(false)
+    }
+  }, [params.id, stopPolling])
 
   const copyAccountNumber = () => {
     if (!payment?.account_number) return
@@ -233,9 +255,14 @@ export default function OrderDetailPage() {
                   )}
 
                   {isAwaitingPayment && (
-                    <p className="text-center text-xs text-muted-foreground">
-                      Waiting for your transfer — this page updates automatically once received.
-                    </p>
+                    <div className="text-center space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        Waiting for your transfer — this page updates automatically once received.
+                      </p>
+                      <Button variant="outline" size="sm" onClick={verifyPayment} disabled={verifying}>
+                        {verifying ? "Checking..." : "I have sent the money"}
+                      </Button>
+                    </div>
                   )}
                 </>
               ) : null}

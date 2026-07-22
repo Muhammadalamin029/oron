@@ -12,6 +12,11 @@ export const paymentsApi = {
     return response.data;
   },
 
+  verifyPayment: async (orderId: string): Promise<PaymentStatusResponse> => {
+    const response = await apiClient.post<PaymentStatusResponse>(`/payments/orders/${orderId}/verify`);
+    return response.data;
+  },
+
   getUserPayments: async (): Promise<Payment[]> => {
     const response = await apiClient.get<Payment[]>('/payments/my-payments');
     return response.data;

@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { Eye, EyeOff, Watch } from "lucide-react"
 import { authApi } from "@/services/auth"
 import { useAuth } from "@/contexts/auth-context"
+import { getPasswordError } from "@/lib/validation"
 
 function SetPasswordPageContent() {
   const router = useRouter()
@@ -30,8 +31,9 @@ function SetPasswordPageContent() {
       return
     }
 
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters")
+    const passwordError = getPasswordError(password)
+    if (passwordError) {
+      toast.error(passwordError)
       return
     }
 

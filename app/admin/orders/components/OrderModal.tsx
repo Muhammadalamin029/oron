@@ -4,20 +4,18 @@ import { toast } from "sonner";
 import type { Order, User } from "@/types/api";
 import { adminApi } from "@/services/admin";
 import { shipmentsApi } from "@/services/shipments";
-import { formatDateTime, formatNGN } from "@/lib/admin-utils";
+import {
+  formatDateTime,
+  formatNGN,
+  CANCELLABLE_FROM_STATUSES,
+  TERMINAL_ORDER_STATUSES,
+  PAYMENT_GATED_STATUSES,
+  NEXT_STATUS_LABEL,
+  getNextOrderStatus,
+} from "@/lib/admin-utils";
 import { OrangeButton } from "@/components/admin-ui";
 
 const SHIPMENT_STATUSES = ["label_created", "in_transit", "delivered"];
-const ORDER_STATUSES = [
-  "pending",
-  "unpaid",
-  "paid",
-  "expired",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
-];
 
 export default function OrderModal({
   order,
@@ -37,6 +35,7 @@ export default function OrderModal({
     (order.status || "pending").toLowerCase(),
   );
   const [submitting, setSubmitting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const handleShipment = async () => {
     try {
@@ -59,14 +58,28 @@ export default function OrderModal({
     }
   };
 
-  const handleStatusUpdate = async (value: string) => {
+  const updateStatus = async (value: string) => {
     try {
-      setOrderStatus(value);
+      setUpdatingStatus(true);
       await adminApi.updateOrderStatus(order.id, value);
+      setOrderStatus(value);
       toast.success("Order status updated");
       await onUpdated();
     } catch (err: any) {
       toast.error(err?.message || "Failed to update status");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleAdvance = () => {
+    const next = getNextOrderStatus(orderStatus);
+    if (next) updateStatus(next);
+  };
+
+  const handleCancel = () => {
+    if (window.confirm("Cancel this order? This cannot be undone.")) {
+      updateStatus("cancelled");
     }
   };
 
@@ -211,19 +224,38 @@ export default function OrderModal({
           {/* Update order status */}
           <div className="col-span-1 md:col-span-2 pt-2 border-t border-white/5">
             <h4 className="text-[10px] font-bold tracking-[0.2em] text-[#ff6b00] uppercase mb-3">
-              Update Order Status
+              Order Status
             </h4>
-            <select
-              value={orderStatus}
-              onChange={(e) => handleStatusUpdate(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#1a1a1a] text-[#e5e2e1] px-4 py-2.5 rounded text-sm focus:outline-none focus:border-[#ff6b00] transition-all appearance-none"
-            >
-              {ORDER_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s.toUpperCase()}
-                </option>
-              ))}
-            </select>
+            {PAYMENT_GATED_STATUSES.includes(orderStatus) ? (
+              <p className="text-sm text-[#9a9898]">
+                This order must be paid before its status can be updated.
+              </p>
+            ) : TERMINAL_ORDER_STATUSES.includes(orderStatus) ? (
+              <p className="text-sm text-[#9a9898]">
+                This order is{" "}
+                <span className="text-white font-semibold">
+                  {orderStatus.toUpperCase()}
+                </span>{" "}
+                — no further changes are possible.
+              </p>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {getNextOrderStatus(orderStatus) && (
+                  <OrangeButton onClick={handleAdvance} disabled={updatingStatus}>
+                    {updatingStatus ? "UPDATING..." : NEXT_STATUS_LABEL[orderStatus]}
+                  </OrangeButton>
+                )}
+                {CANCELLABLE_FROM_STATUSES.includes(orderStatus) && (
+                  <button
+                    onClick={handleCancel}
+                    disabled={updatingStatus}
+                    className="border border-red-900 text-red-400 hover:bg-red-900/20 font-bold text-[10px] tracking-[0.2em] uppercase px-6 py-3 rounded-lg transition-all disabled:opacity-40"
+                  >
+                    Cancel Order
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

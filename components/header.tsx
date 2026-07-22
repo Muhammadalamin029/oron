@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { useCart } from "@/lib/cart-context"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { notificationsApi } from "@/services/notifications"
 import { cn } from "@/lib/utils"
 
 const navLeft = [
@@ -57,6 +58,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     setMounted(true)
@@ -64,6 +66,25 @@ export function Header() {
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadCount(0)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await notificationsApi.getNotifications()
+        if (!cancelled) setUnreadCount(data.filter((n) => !n.is_read).length)
+      } catch {
+        // badge just won't show a count
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated])
 
   return (
     <header
@@ -241,6 +262,21 @@ export function Header() {
             >
               <User className="h-[18px] w-[18px]" />
             </Link>
+
+            {isAuthenticated && (
+              <Link
+                href="/notifications"
+                className="hidden md:flex relative text-[#c6c6c6] hover:text-[#ff6b00] transition-colors duration-200 active:scale-95"
+                aria-label="Notifications"
+              >
+                <Bell className="h-[18px] w-[18px]" />
+                {mounted && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[#ff6b00] text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <Link href="/cart" className="relative text-[#ff6b00] hover:text-[#ff8533] transition-colors duration-200 active:scale-95" aria-label="Cart">
               <ShoppingCart className="h-[18px] w-[18px]" />

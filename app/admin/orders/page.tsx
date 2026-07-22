@@ -30,6 +30,7 @@ const STATUSES = [
   "PENDING",
   "UNPAID",
   "PAID",
+  "EXPIRED",
   "PROCESSING",
   "SHIPPED",
   "DELIVERED",
