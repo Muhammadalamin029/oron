@@ -118,6 +118,67 @@ export interface GuestCheckoutResponse {
   message: string;
 }
 
+// Payment Links
+export interface PaymentLinkItemCreate {
+  product_id: string;
+  default_quantity: number;
+}
+
+export interface PaymentLinkCreate {
+  title: string;
+  items: PaymentLinkItemCreate[];
+  is_active?: boolean;
+}
+
+export interface PaymentLinkUpdate {
+  title?: string;
+  items?: PaymentLinkItemCreate[];
+  is_active?: boolean;
+}
+
+export interface PaymentLinkItem {
+  id: string;
+  payment_link_id: string;
+  product_id: string;
+  default_quantity: number;
+  product: Product;
+}
+
+export interface PaymentLink {
+  id: string;
+  title: string;
+  slug: string;
+  created_by: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  items: PaymentLinkItem[];
+}
+
+export interface PaymentLinkPublicItem {
+  product_id: string;
+  default_quantity: number;
+  product: Product;
+}
+
+export interface PaymentLinkPublic {
+  slug: string;
+  title: string;
+  items: PaymentLinkPublicItem[];
+}
+
+export interface PaymentLinkCheckoutRequest {
+  items: {
+    product_id: string;
+    quantity: number;
+  }[];
+  shipping: Omit<OrderShippingInfo, "id" | "order_id" | "created_at" | "updated_at">;
+}
+
+export interface PaymentLinkCheckoutResponse extends ChargeInitiateResponse {
+  email: string;
+}
+
 // API Response types
 export interface PaginatedResponse<T> {
   items: T[];
