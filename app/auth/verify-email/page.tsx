@@ -4,37 +4,38 @@ import { useEffect, useState, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { authApi } from "@/services/auth"
+import { AuthShell, AuthHeading } from "@/components/auth-ui"
+import { GlassCard, OrangeButton } from "@/components/admin-ui"
 
 function VerifyEmailPageContent() {
   const searchParams = useSearchParams()
-  const [loading, setLoading] = useState(true)
-  const [message, setMessage] = useState<string>("")
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
     let cancelled = false
     const token = searchParams.get("token")
     if (!token) {
-      setLoading(false)
+      setStatus("error")
       setMessage("Missing verification token.")
       return
     }
 
     ;(async () => {
       try {
-        setLoading(true)
         const result = await authApi.verifyEmail(token)
-        if (!cancelled) setMessage(result.msg || "Email verified.")
+        if (!cancelled) {
+          setStatus("success")
+          setMessage(result.msg || "Email verified.")
+        }
       } catch (error: any) {
         if (!cancelled) {
-          toast.error(error?.message || "Verification failed")
+          setStatus("error")
           setMessage(error?.message || "Verification failed.")
+          toast.error(error?.message || "Verification failed")
         }
-      } finally {
-        if (!cancelled) setLoading(false)
       }
     })()
 
@@ -44,25 +45,40 @@ function VerifyEmailPageContent() {
   }, [searchParams])
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-lg mx-auto text-center">
-          <h1 className="text-3xl font-serif text-foreground mb-4">
-            Verify Email
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            {loading ? "Verifying your email..." : message}
-          </p>
-          <Link href="/auth/login">
-            <Button className="bg-primary text-primary-foreground">
-              Go to Login
-            </Button>
-          </Link>
+    <AuthShell tagline="Timeless Masterpiece. Discover our collection of premium luxury watches crafted with precision and elegance.">
+      <AuthHeading
+        title={
+          status === "loading"
+            ? "Verifying your email"
+            : status === "success"
+              ? "Email verified"
+              : "Verification failed"
+        }
+      />
+
+      <GlassCard className="p-6 sm:p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#ff6b00]/10 border border-[#ff6b00]/30 flex items-center justify-center mx-auto mb-6">
+          {status === "loading" && <Loader2 className="h-8 w-8 text-[#ff6b00] animate-spin" />}
+          {status === "success" && <CheckCircle2 className="h-8 w-8 text-[#ff6b00]" />}
+          {status === "error" && <XCircle className="h-8 w-8 text-[#ff6b00]" />}
         </div>
-      </main>
-      <Footer />
-    </div>
+        <p className="text-[#9a9898] mb-8">
+          {status === "loading" ? "Please wait a moment..." : message}
+        </p>
+
+        {status !== "loading" && (
+          <Link href="/auth/login">
+            <OrangeButton className="w-full">GO TO LOGIN</OrangeButton>
+          </Link>
+        )}
+      </GlassCard>
+
+      <div className="mt-8 text-center">
+        <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">
+          Back to Home
+        </Link>
+      </div>
+    </AuthShell>
   )
 }
 
@@ -73,4 +89,3 @@ export default function VerifyEmailPage() {
     </Suspense>
   )
 }
-

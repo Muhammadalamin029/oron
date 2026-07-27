@@ -2,11 +2,10 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { ArrowLeft, Watch, Mail } from "lucide-react"
+import { ArrowLeft, Mail } from "lucide-react"
+import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
+import { GlassCard, OrangeButton } from "@/components/admin-ui"
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -25,64 +24,47 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-8">
-        <div className="w-full max-w-md text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-            <Mail className="h-8 w-8 text-primary" />
+      <AuthShell tagline="No worries, we'll send you reset instructions.">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-[#ff6b00]/10 border border-[#ff6b00]/30 flex items-center justify-center mx-auto mb-6">
+            <Mail className="h-8 w-8 text-[#ff6b00]" />
           </div>
-          <h2 className="text-2xl font-semibold text-foreground mb-4">
-            Check your email
-          </h2>
-          <p className="text-muted-foreground mb-8">
+          <h2 className="font-display font-bold text-2xl text-white mb-4">Check your email</h2>
+          <p className="text-[#9a9898] mb-8">
             We&apos;ve sent a password reset link to{" "}
-            <span className="font-medium text-foreground">{email}</span>
+            <span className="font-medium text-white">{email}</span>
           </p>
           <Link href="/auth/login">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Back to Sign in
-            </Button>
+            <OrangeButton className="w-full">BACK TO SIGN IN</OrangeButton>
           </Link>
-          <p className="text-sm text-muted-foreground mt-6">
+          <p className="text-sm text-[#9a9898] mt-6">
             Didn&apos;t receive the email?{" "}
-            <button
-              onClick={() => setIsSubmitted(false)}
-              className="text-primary hover:underline"
-            >
+            <button onClick={() => setIsSubmitted(false)} className="text-[#ff6b00] hover:underline">
               Try again
             </button>
           </p>
         </div>
-      </div>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-8">
-      <div className="w-full max-w-md">
-        <Link
-          href="/auth/login"
-          className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Sign in
-        </Link>
+    <AuthShell tagline="No worries, we'll send you reset instructions.">
+      <Link
+        href="/auth/login"
+        className="inline-flex items-center text-sm text-[#9a9898] hover:text-white transition-colors mb-8"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Sign in
+      </Link>
 
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-            <Watch className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-2xl font-semibold text-foreground">
-            Forgot password?
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            No worries, we&apos;ll send you reset instructions.
-          </p>
-        </div>
+      <AuthHeading title="Forgot password?" sub="No worries, we'll send you reset instructions." />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
+      <GlassCard className="p-6 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <AuthLabel htmlFor="email">Email</AuthLabel>
+            <AuthInput
               id="email"
               type="email"
               placeholder="Enter your email"
@@ -92,24 +74,17 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            disabled={isLoading}
-          >
-            {isLoading ? "Sending..." : "Reset password"}
-          </Button>
+          <OrangeButton type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? "SENDING..." : "RESET PASSWORD"}
+          </OrangeButton>
         </form>
+      </GlassCard>
 
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Back to Home
-          </Link>
-        </div>
+      <div className="mt-8 text-center">
+        <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">
+          Back to Home
+        </Link>
       </div>
-    </div>
+    </AuthShell>
   )
 }

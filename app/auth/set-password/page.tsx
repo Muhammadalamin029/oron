@@ -3,14 +3,13 @@
 import { useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { Eye, EyeOff, Watch } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { authApi } from "@/services/auth"
 import { useAuth } from "@/contexts/auth-context"
 import { getPasswordError } from "@/lib/validation"
+import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
+import { GlassCard, OrangeButton } from "@/components/admin-ui"
 
 function SetPasswordPageContent() {
   const router = useRouter()
@@ -56,100 +55,63 @@ function SetPasswordPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-primary/10 items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-            <Watch className="h-10 w-10 text-primary" />
-          </div>
-          <h1 className="text-4xl font-serif text-foreground mb-4">ORON</h1>
-          <p className="text-muted-foreground text-lg">
-            One last step and your order details are ready to view.
+    <AuthShell tagline="One last step and your order details are ready to view.">
+      <AuthHeading title="Set your password" sub="This verifies your email and unlocks your order." />
+
+      <GlassCard className="p-6 sm:p-8">
+        {!token ? (
+          <p className="text-center text-[#9a9898]">
+            This link is missing its verification token. Please use the link from your email.
           </p>
-        </div>
-      </div>
-
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8 lg:hidden">
-            <h1 className="text-3xl font-serif text-foreground">ORON</h1>
-          </div>
-
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Set your password
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              This verifies your email and unlocks your order.
-            </p>
-          </div>
-
-          {!token ? (
-            <p className="text-center text-muted-foreground">
-              This link is missing its verification token. Please use the link from your email.
-            </p>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <AuthLabel htmlFor="password">Password</AuthLabel>
+              <div className="relative">
+                <AuthInput
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-11"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9a9898] hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
+            </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                disabled={isLoading}
-              >
-                {isLoading ? "Setting password..." : "Set Password & Continue"}
-              </Button>
-            </form>
-          )}
+            <div>
+              <AuthLabel htmlFor="confirmPassword">Confirm Password</AuthLabel>
+              <AuthInput
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
 
-          <div className="mt-8 text-center">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Back to Home
-            </Link>
-          </div>
-        </div>
+            <OrangeButton type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? "SETTING PASSWORD..." : "SET PASSWORD & CONTINUE"}
+            </OrangeButton>
+          </form>
+        )}
+      </GlassCard>
+
+      <div className="mt-8 text-center">
+        <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">
+          Back to Home
+        </Link>
       </div>
-    </div>
+    </AuthShell>
   )
 }
 

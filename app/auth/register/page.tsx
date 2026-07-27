@@ -3,14 +3,12 @@
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { Eye, EyeOff, Watch } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { getPasswordError } from "@/lib/validation"
+import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
+import { GlassCard, OrangeButton } from "@/components/admin-ui"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -58,159 +56,108 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-primary/10 items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-            <Watch className="h-10 w-10 text-primary" />
-          </div>
-          <h1 className="text-4xl font-serif text-foreground mb-4">ORON</h1>
-          <p className="text-muted-foreground text-lg">
-            Join our community of watch enthusiasts and get exclusive access to
-            limited edition timepieces.
-          </p>
-        </div>
-      </div>
+    <AuthShell tagline="Join our community of watch enthusiasts and get exclusive access to limited edition timepieces.">
+      <AuthHeading title="Create an account" sub="Join ORON to start your watch collection" />
 
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8 lg:hidden">
-            <h1 className="text-3xl font-serif text-foreground">ORON</h1>
-            <p className="text-muted-foreground mt-2">Timeless Masterpiece</p>
+      <GlassCard className="p-6 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <AuthLabel htmlFor="name">Full Name</AuthLabel>
+            <AuthInput
+              id="name"
+              type="text"
+              placeholder="Enter your full name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
           </div>
 
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Create an account
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              Join ORON to start your watch collection
-            </p>
+          <div>
+            <AuthLabel htmlFor="email">Email</AuthLabel>
+            <AuthInput
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+          <div>
+            <AuthLabel htmlFor="password">Password</AuthLabel>
+            <div className="relative">
+              <AuthInput
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="pr-11"
                 required
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={formData.terms}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, terms: checked as boolean })
-                }
-              />
-              <Label htmlFor="terms" className="text-sm font-normal leading-5">
-                I agree to the{" "}
-                <Link href="#" className="text-primary hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="#" className="text-primary hover:underline">
-                  Privacy Policy
-                </Link>
-              </Label>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating account..." : "Create account"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                href="/auth/login"
-                className="text-primary font-medium hover:underline"
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9a9898] hover:text-white transition-colors"
               >
-                Sign in
-              </Link>
-            </p>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
-          <div className="mt-8 text-center">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Back to Home
-            </Link>
+          <div>
+            <AuthLabel htmlFor="confirmPassword">Confirm Password</AuthLabel>
+            <AuthInput
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              required
+            />
           </div>
-        </div>
+
+          <label className="flex items-start gap-2 text-sm text-[#9a9898] cursor-pointer leading-5">
+            <input
+              type="checkbox"
+              checked={formData.terms}
+              onChange={(e) => setFormData({ ...formData, terms: e.target.checked })}
+              className="w-4 h-4 mt-0.5 rounded border-[#353534] bg-[#0a0a0a] accent-[#ff6b00] flex-shrink-0"
+            />
+            <span>
+              I agree to the{" "}
+              <Link href="#" className="text-[#ff6b00] hover:underline">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="#" className="text-[#ff6b00] hover:underline">
+                Privacy Policy
+              </Link>
+            </span>
+          </label>
+
+          <OrangeButton type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+          </OrangeButton>
+        </form>
+      </GlassCard>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm text-[#9a9898]">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="text-[#ff6b00] font-semibold hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
-    </div>
+
+      <div className="mt-8 text-center">
+        <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">
+          Back to Home
+        </Link>
+      </div>
+    </AuthShell>
   )
 }
