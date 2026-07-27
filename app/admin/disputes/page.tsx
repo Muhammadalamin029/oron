@@ -2,21 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Search, Scale } from "lucide-react"
 import { adminApi } from "@/services/admin"
 import type { Dispute, User, Order } from "@/types/api"
 import { DisputeModal } from "./components/DisputeModal"
+import {
+  AdminPageHeader,
+  GlassCard,
+  StatusBadge,
+  SkeletonRows,
+  DarkInput,
+  CustomerCell,
+  AdminTable,
+  AdminTr,
+  AdminTd,
+  EmptyState,
+} from "@/components/admin-ui"
 
 export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState<(Dispute & { user?: User; order?: Order })[]>([])
@@ -56,67 +57,48 @@ export default function AdminDisputesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Disputes</h1>
-        <p className="text-muted-foreground">Review and resolve disputes</p>
-      </div>
+      <AdminPageHeader title="DISPUTES" sub="/ REVIEW & RESOLVE" />
 
-      <Card>
-        <CardHeader>
-          <div className="max-w-md">
-            <Input
-              placeholder="Search disputes..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-12 rounded-md bg-muted/30 animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Dispute</TableHead>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((d) => {
-                    const user = d.user
-                    return (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-medium">{d.reason}</TableCell>
-                        <TableCell>{d.order_id}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{user?.full_name || "—"}</p>
-                            <p className="text-sm text-muted-foreground">{user?.email || d.user_id}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{d.status}</TableCell>
-                        <TableCell className="text-right">
-                          <DisputeModal dispute={d} onUpdated={load} />
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <DarkInput
+        placeholder="Search disputes, customers, orders..."
+        value={search}
+        onChange={setSearch}
+        icon={<Search className="h-4 w-4" />}
+        className="w-full md:w-96"
+      />
+
+      <GlassCard className="overflow-hidden">
+        {loading ? (
+          <SkeletonRows count={6} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={<Scale className="h-8 w-8" />}
+            title="No disputes found"
+            message="Disputes filed by customers on their orders will show up here."
+          />
+        ) : (
+          <AdminTable headers={["Dispute", "Order", "Customer", "Status", "Action"]}>
+            {filtered.map((d) => {
+              const user = d.user
+              return (
+                <AdminTr key={d.id}>
+                  <AdminTd className="font-medium text-white">{d.reason}</AdminTd>
+                  <AdminTd mono>#{d.order_id.slice(0, 10).toUpperCase()}</AdminTd>
+                  <AdminTd>
+                    <CustomerCell name={user?.full_name || "Customer"} email={user?.email || d.user_id} />
+                  </AdminTd>
+                  <AdminTd>
+                    <StatusBadge status={d.status} />
+                  </AdminTd>
+                  <AdminTd className="text-right">
+                    <DisputeModal dispute={d} onUpdated={load} />
+                  </AdminTd>
+                </AdminTr>
+              )
+            })}
+          </AdminTable>
+        )}
+      </GlassCard>
     </div>
   )
 }
-

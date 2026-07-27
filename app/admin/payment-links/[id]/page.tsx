@@ -16,7 +16,6 @@ import {
   CustomerCell,
   EmptyState,
 } from "@/components/admin-ui";
-import OrderModal from "../../orders/components/OrderModal";
 
 export default function PaymentLinkDetailPage() {
   const params = useParams<{ id: string }>();
@@ -26,7 +25,6 @@ export default function PaymentLinkDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<(Order & { user?: User }) | null>(null);
 
   const load = async () => {
     const [linkRes, sessionsRes] = await Promise.all([
@@ -103,11 +101,10 @@ export default function PaymentLinkDetailPage() {
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        <AdminPageHeader
-          title={link.title}
-          sub="/ PAYMENT LINK"
+    <div className="space-y-6">
+      <AdminPageHeader
+        title={link.title}
+        sub="/ PAYMENT LINK"
           action={
             <button
               onClick={() => router.push("/admin/payment-links")}
@@ -218,7 +215,7 @@ export default function PaymentLinkDetailPage() {
                     {sessions.map((order) => (
                       <tr
                         key={order.id}
-                        onClick={() => setSelectedOrder(order)}
+                        onClick={() => router.push(`/admin/orders/${order.id}`)}
                         className="border-l-2 border-transparent hover:border-[#ff6b00] hover:bg-white/[0.02] transition-all cursor-pointer group"
                       >
                         <td className="p-4 font-mono text-[#9a9898] text-xs truncate max-w-[110px]">
@@ -248,18 +245,5 @@ export default function PaymentLinkDetailPage() {
           </GlassCard>
         </div>
       </div>
-
-      {selectedOrder && (
-        <OrderModal
-          order={selectedOrder}
-          user={selectedOrder.user}
-          onClose={() => setSelectedOrder(null)}
-          onUpdated={async () => {
-            await load();
-            setSelectedOrder(null);
-          }}
-        />
-      )}
-    </>
   );
 }

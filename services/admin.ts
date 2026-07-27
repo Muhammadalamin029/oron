@@ -19,6 +19,11 @@ export const adminApi = {
     return response.data;
   },
 
+  getOrderWithUser: async (orderId: string): Promise<Order & { user?: User }> => {
+    const response = await apiClient.get<Order & { user?: User }>(`/admin/orders/${orderId}`);
+    return response.data;
+  },
+
   getUsers: async (): Promise<User[]> => {
     const response = await apiClient.get<User[]>('/auth/users');
     return response.data;

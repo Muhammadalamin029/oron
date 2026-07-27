@@ -1,16 +1,79 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { settingsApi } from "@/services/settings"
+import { AdminPageHeader, GlassCard, SkeletonRows, OrangeButton } from "@/components/admin-ui"
+import { cn } from "@/lib/utils"
+
+const TABS = ["general", "notifications", "shipping"] as const
+type Tab = (typeof TABS)[number]
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative w-11 h-6 rounded-full transition-colors flex-shrink-0",
+        checked ? "bg-[#ff6b00]" : "bg-[#2a2a2a]"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform",
+          checked && "translate-x-5"
+        )}
+      />
+    </button>
+  )
+}
+
+function FormLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="block text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1.5">
+      {children}
+    </label>
+  )
+}
+
+function DarkTextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className="w-full bg-[#0a0a0a] border border-[#353534] text-[#e5e2e1] placeholder:text-[#353534] px-4 py-3 rounded-lg text-sm focus:outline-none focus:border-[#ff6b00] transition-all"
+    />
+  )
+}
+
+function ToggleRow({
+  title,
+  description,
+  checked,
+  onChange,
+  bordered = true,
+}: {
+  title: string
+  description: string
+  checked: boolean
+  onChange: (v: boolean) => void
+  bordered?: boolean
+}) {
+  return (
+    <div className={cn("flex items-center justify-between gap-4 py-4", bordered && "border-t border-white/5")}>
+      <div>
+        <p className="text-sm font-semibold text-white">{title}</p>
+        <p className="text-sm text-[#9a9898]">{description}</p>
+      </div>
+      <Toggle checked={checked} onChange={onChange} />
+    </div>
+  )
+}
 
 export default function AdminSettingsPage() {
+  const [activeTab, setActiveTab] = useState<Tab>("general")
   const [storeSettings, setStoreSettings] = useState({
     storeName: "ORON",
     storeEmail: "contact@oron.com",
@@ -63,8 +126,7 @@ export default function AdminSettingsPage() {
           storePhone: map.contact_phone ?? prev.storePhone,
           currency: map.currency_symbol ?? prev.currency,
           enableNotifications:
-            (map.enable_notifications ?? String(prev.enableNotifications)) ===
-            "true",
+            (map.enable_notifications ?? String(prev.enableNotifications)) === "true",
           enableNewsletter:
             (map.enable_newsletter ?? String(prev.enableNewsletter)) === "true",
           maintenanceMode:
@@ -73,8 +135,7 @@ export default function AdminSettingsPage() {
           freeShippingThreshold:
             map.shipping_free_threshold ?? prev.freeShippingThreshold,
           enableExpressShipping:
-            (map.enable_express_shipping ??
-              String(prev.enableExpressShipping)) === "true",
+            (map.enable_express_shipping ?? String(prev.enableExpressShipping)) === "true",
         }))
       } catch (error: any) {
         if (!cancelled) toast.error(error?.message || "Failed to load settings")
@@ -101,9 +162,7 @@ export default function AdminSettingsPage() {
         })
         .filter(Boolean) as { key: string; value: string }[]
 
-      await Promise.all(
-        updates.map((u) => settingsApi.updateSetting(u.key, { value: u.value }))
-      )
+      await Promise.all(updates.map((u) => settingsApi.updateSetting(u.key, { value: u.value })))
 
       const nextInitial = { ...initialMap }
       for (const u of updates) nextInitial[u.key] = u.value
@@ -117,264 +176,148 @@ export default function AdminSettingsPage() {
     }
   }
 
+  const set = (field: keyof typeof storeSettings) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setStoreSettings((prev) => ({ ...prev, [field]: e.target.value }))
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your store settings and preferences
-        </p>
+      <AdminPageHeader title="SETTINGS" sub="/ STORE PREFERENCES" />
+
+      <div className="flex flex-wrap gap-2">
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              "px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all",
+              activeTab === tab
+                ? "bg-[#ff6b00] text-white"
+                : "bg-[#0a0a0a] border border-[#1a1a1a] text-[#9a9898] hover:border-[#ff6b00] hover:text-[#ff6b00]"
+            )}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="shipping">Shipping</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>Store Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {loading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-10 rounded-md bg-muted/30 animate-pulse"
-                    />
-                  ))}
+      {activeTab === "general" && (
+        <GlassCard className="p-6">
+          <h3 className="font-display font-bold text-lg text-white mb-6">Store Information</h3>
+          {loading ? (
+            <SkeletonRows count={4} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <FormLabel>Store Name</FormLabel>
+                  <DarkTextInput value={storeSettings.storeName} onChange={set("storeName")} />
                 </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="storeName">Store Name</Label>
-                  <Input
-                    id="storeName"
-                    value={storeSettings.storeName}
-                    onChange={(e) =>
-                      setStoreSettings({
-                        ...storeSettings,
-                        storeName: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="storeEmail">Store Email</Label>
-                  <Input
-                    id="storeEmail"
+                <div>
+                  <FormLabel>Store Email</FormLabel>
+                  <DarkTextInput
                     type="email"
                     value={storeSettings.storeEmail}
-                    onChange={(e) =>
-                      setStoreSettings({
-                        ...storeSettings,
-                        storeEmail: e.target.value,
-                      })
-                    }
+                    onChange={set("storeEmail")}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="storePhone">Store Phone</Label>
-                  <Input
-                    id="storePhone"
-                    value={storeSettings.storePhone}
-                    onChange={(e) =>
-                      setStoreSettings({
-                        ...storeSettings,
-                        storePhone: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Input
-                    id="currency"
-                    value={storeSettings.currency}
-                    onChange={(e) =>
-                      setStoreSettings({
-                        ...storeSettings,
-                        currency: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              )}
-
-              <div className="flex items-center justify-between py-4 border-t border-border">
                 <div>
-                  <p className="font-medium">Maintenance Mode</p>
-                  <p className="text-sm text-muted-foreground">
-                    Temporarily disable your store for maintenance
-                  </p>
+                  <FormLabel>Store Phone</FormLabel>
+                  <DarkTextInput value={storeSettings.storePhone} onChange={set("storePhone")} />
                 </div>
-                <Switch
-                  checked={storeSettings.maintenanceMode}
-                  onCheckedChange={(checked) =>
-                    setStoreSettings({
-                      ...storeSettings,
-                      maintenanceMode: checked,
-                    })
-                  }
-                />
-              </div>
-
-              <Button
-                onClick={() =>
-                  saveFields("general", [
-                    "storeName",
-                    "storeEmail",
-                    "storePhone",
-                    "currency",
-                    "maintenanceMode",
-                  ])
-                }
-                className="bg-primary text-primary-foreground"
-                disabled={loading || savingTab === "general"}
-              >
-                {savingTab === "general" ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between py-4 border-b border-border">
                 <div>
-                  <p className="font-medium">Order Notifications</p>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for new orders
-                  </p>
+                  <FormLabel>Currency</FormLabel>
+                  <DarkTextInput value={storeSettings.currency} onChange={set("currency")} />
                 </div>
-                <Switch
-                  checked={storeSettings.enableNotifications}
-                  onCheckedChange={(checked) =>
-                    setStoreSettings({
-                      ...storeSettings,
-                      enableNotifications: checked,
-                    })
+              </div>
+
+              <ToggleRow
+                title="Maintenance Mode"
+                description="Temporarily disable your store for maintenance"
+                checked={storeSettings.maintenanceMode}
+                onChange={(v) => setStoreSettings((prev) => ({ ...prev, maintenanceMode: v }))}
+              />
+
+              <div className="pt-4">
+                <OrangeButton
+                  onClick={() =>
+                    saveFields("general", ["storeName", "storeEmail", "storePhone", "currency", "maintenanceMode"])
                   }
-                />
+                  disabled={loading || savingTab === "general"}
+                >
+                  {savingTab === "general" ? "SAVING..." : "SAVE CHANGES"}
+                </OrangeButton>
               </div>
+            </>
+          )}
+        </GlassCard>
+      )}
 
-              <div className="flex items-center justify-between py-4 border-b border-border">
-                <div>
-                  <p className="font-medium">Newsletter Subscriptions</p>
-                  <p className="text-sm text-muted-foreground">
-                    Allow customers to subscribe to your newsletter
-                  </p>
-                </div>
-                <Switch
-                  checked={storeSettings.enableNewsletter}
-                  onCheckedChange={(checked) =>
-                    setStoreSettings({
-                      ...storeSettings,
-                      enableNewsletter: checked,
-                    })
-                  }
-                />
-              </div>
+      {activeTab === "notifications" && (
+        <GlassCard className="p-6">
+          <h3 className="font-display font-bold text-lg text-white mb-2">Notification Settings</h3>
+          <div className="divide-y-0">
+            <ToggleRow
+              title="Order Notifications"
+              description="Receive email notifications for new orders"
+              checked={storeSettings.enableNotifications}
+              onChange={(v) => setStoreSettings((prev) => ({ ...prev, enableNotifications: v }))}
+            />
+            <ToggleRow
+              title="Newsletter Subscriptions"
+              description="Allow customers to subscribe to your newsletter"
+              checked={storeSettings.enableNewsletter}
+              onChange={(v) => setStoreSettings((prev) => ({ ...prev, enableNewsletter: v }))}
+            />
+          </div>
+          <div className="pt-4">
+            <OrangeButton
+              onClick={() => saveFields("notifications", ["enableNotifications", "enableNewsletter"])}
+              disabled={loading || savingTab === "notifications"}
+            >
+              {savingTab === "notifications" ? "SAVING..." : "SAVE CHANGES"}
+            </OrangeButton>
+          </div>
+        </GlassCard>
+      )}
 
-              <Button
-                onClick={() =>
-                  saveFields("notifications", [
-                    "enableNotifications",
-                    "enableNewsletter",
-                  ])
-                }
-                className="bg-primary text-primary-foreground"
-                disabled={loading || savingTab === "notifications"}
-              >
-                {savingTab === "notifications" ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {activeTab === "shipping" && (
+        <GlassCard className="p-6">
+          <h3 className="font-display font-bold text-lg text-white mb-6">Shipping Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-2">
+            <div>
+              <FormLabel>Flat Rate Shipping</FormLabel>
+              <DarkTextInput value={storeSettings.shippingFlatRate} onChange={set("shippingFlatRate")} />
+              <p className="text-xs text-[#9a9898] mt-1.5">Standard shipping rate in NGN</p>
+            </div>
+            <div>
+              <FormLabel>Free Shipping Threshold</FormLabel>
+              <DarkTextInput
+                value={storeSettings.freeShippingThreshold}
+                onChange={set("freeShippingThreshold")}
+              />
+              <p className="text-xs text-[#9a9898] mt-1.5">Free shipping for orders above this amount</p>
+            </div>
+          </div>
 
-        <TabsContent value="shipping">
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Flat Rate Shipping</Label>
-                  <Input
-                    value={storeSettings.shippingFlatRate}
-                    onChange={(e) =>
-                      setStoreSettings({
-                        ...storeSettings,
-                        shippingFlatRate: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Standard shipping rate in NGN
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Free Shipping Threshold</Label>
-                  <Input
-                    value={storeSettings.freeShippingThreshold}
-                    onChange={(e) =>
-                      setStoreSettings({
-                        ...storeSettings,
-                        freeShippingThreshold: e.target.value,
-                      })
-                    }
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Free shipping for orders above this amount
-                  </p>
-                </div>
-              </div>
+          <ToggleRow
+            title="Enable Express Shipping"
+            description="Offer express delivery option to customers"
+            checked={storeSettings.enableExpressShipping}
+            onChange={(v) => setStoreSettings((prev) => ({ ...prev, enableExpressShipping: v }))}
+          />
 
-              <div className="flex items-center justify-between py-4 border-t border-border">
-                <div>
-                  <p className="font-medium">Enable Express Shipping</p>
-                  <p className="text-sm text-muted-foreground">
-                    Offer express delivery option to customers
-                  </p>
-                </div>
-                <Switch
-                  checked={storeSettings.enableExpressShipping}
-                  onCheckedChange={(checked) =>
-                    setStoreSettings({
-                      ...storeSettings,
-                      enableExpressShipping: checked,
-                    })
-                  }
-                />
-              </div>
-
-              <Button
-                onClick={() =>
-                  saveFields("shipping", [
-                    "shippingFlatRate",
-                    "freeShippingThreshold",
-                    "enableExpressShipping",
-                  ])
-                }
-                className="bg-primary text-primary-foreground"
-                disabled={loading || savingTab === "shipping"}
-              >
-                {savingTab === "shipping" ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <div className="pt-4">
+            <OrangeButton
+              onClick={() =>
+                saveFields("shipping", ["shippingFlatRate", "freeShippingThreshold", "enableExpressShipping"])
+              }
+              disabled={loading || savingTab === "shipping"}
+            >
+              {savingTab === "shipping" ? "SAVING..." : "SAVE CHANGES"}
+            </OrangeButton>
+          </div>
+        </GlassCard>
+      )}
     </div>
   )
 }

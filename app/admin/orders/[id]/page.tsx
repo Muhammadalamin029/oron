@@ -1,9 +1,11 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { Order, User } from "@/types/api";
 import { adminApi } from "@/services/admin";
 import { shipmentsApi } from "@/services/shipments";
+import type { Order, User } from "@/types/api";
 import {
   formatDateTime,
   formatNGN,
@@ -13,35 +15,51 @@ import {
   NEXT_STATUS_LABEL,
   getNextOrderStatus,
 } from "@/lib/admin-utils";
-import { OrangeButton } from "@/components/admin-ui";
+import { AdminPageHeader, GlassCard, SkeletonRows, OrangeButton } from "@/components/admin-ui";
 
 const SHIPMENT_STATUSES = ["label_created", "in_transit", "delivered"];
 
-export default function OrderModal({
-  order,
-  user,
-  onClose,
-  onUpdated,
-}: {
-  order: Order;
-  user?: User;
-  onClose: () => void;
-  onUpdated: () => Promise<void>;
-}) {
+export default function AdminOrderDetailPage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+
+  const [order, setOrder] = useState<(Order & { user?: User }) | null>(null);
+  const [loading, setLoading] = useState(true);
   const [carrier, setCarrier] = useState("");
   const [tracking, setTracking] = useState("");
   const [shipStatus, setShipStatus] = useState("label_created");
-  const [orderStatus, setOrderStatus] = useState(
-    (order.status || "pending").toLowerCase(),
-  );
+  const [orderStatus, setOrderStatus] = useState("pending");
   const [submitting, setSubmitting] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const load = async () => {
+    const data = await adminApi.getOrderWithUser(params.id);
+    setOrder(data);
+    setOrderStatus((data.status || "pending").toLowerCase());
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        await load();
+      } catch (err: any) {
+        if (!cancelled) toast.error(err?.message || "Failed to load order");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [params.id]);
 
   const handleShipment = async () => {
     try {
       setSubmitting(true);
       await shipmentsApi.createShipment({
-        order_id: order.id,
+        order_id: params.id,
         carrier,
         tracking_number: tracking,
         status: shipStatus,
@@ -50,7 +68,7 @@ export default function OrderModal({
       setCarrier("");
       setTracking("");
       setShipStatus("label_created");
-      await onUpdated();
+      await load();
     } catch (err: any) {
       toast.error(err?.message || "Failed to create shipment");
     } finally {
@@ -61,10 +79,10 @@ export default function OrderModal({
   const updateStatus = async (value: string) => {
     try {
       setUpdatingStatus(true);
-      await adminApi.updateOrderStatus(order.id, value);
+      await adminApi.updateOrderStatus(params.id, value);
       setOrderStatus(value);
       toast.success("Order status updated");
-      await onUpdated();
+      await load();
     } catch (err: any) {
       toast.error(err?.message || "Failed to update status");
     } finally {
@@ -83,26 +101,36 @@ export default function OrderModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111111]/90 backdrop-blur-xl border border-white/5 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]/50">
-          <h3 className="font-display font-bold text-xl text-white tracking-tight">
-            ORDER{" "}
-            <span className="text-[#9a9898] font-mono text-base">
-              / #{order.id.slice(0, 12).toUpperCase()}
-            </span>
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-[#9a9898] hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-white/5"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+  if (loading || !order) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeader title="ORDER" sub="/ LOADING..." />
+        <GlassCard className="overflow-hidden">
+          <SkeletonRows count={4} />
+        </GlassCard>
+      </div>
+    );
+  }
 
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto">
+  const user = order.user;
+
+  return (
+    <div className="space-y-6">
+      <AdminPageHeader
+        title={`ORDER / #${order.id.slice(0, 12).toUpperCase()}`}
+        sub="/ ORDER DETAILS"
+        action={
+          <button
+            onClick={() => router.back()}
+            className="border border-[#353534] text-[#9a9898] hover:text-white transition-colors px-6 py-3 rounded-full text-[10px] font-bold tracking-widest uppercase"
+          >
+            BACK
+          </button>
+        }
+      />
+
+      <GlassCard className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left info */}
           <div className="space-y-4">
             <div>
@@ -219,6 +247,9 @@ export default function OrderModal({
                 </select>
               </div>
             </div>
+            <OrangeButton onClick={handleShipment} disabled={submitting || !carrier}>
+              {submitting ? "SUBMITTING..." : "SUBMIT UPDATE"}
+            </OrangeButton>
           </div>
 
           {/* Update order status */}
@@ -258,17 +289,7 @@ export default function OrderModal({
             )}
           </div>
         </div>
-
-        {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-white/5 bg-[#0a0a0a]/80 flex justify-end">
-          <OrangeButton
-            onClick={handleShipment}
-            disabled={submitting || !carrier}
-          >
-            {submitting ? "SUBMITTING..." : "SUBMIT UPDATE"}
-          </OrangeButton>
-        </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

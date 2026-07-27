@@ -27,7 +27,7 @@ export type StatusKey =
   | "processing" | "shipped" | "pending"
   | "cancelled" | "canceled" | "failed"
   | "delivered" | "open" | "under_review"
-  | "resolved" | "rejected"
+  | "resolved" | "rejected" | "answered" | "closed"
 
 interface StatusConfig {
   dot: string
@@ -53,6 +53,9 @@ export const statusConfig: Record<string, StatusConfig> = {
   under_review: { dot: "bg-amber-400 animate-pulse",                           badge: "border-amber-900 bg-amber-900/20 text-amber-400",    label: "UNDER REVIEW" },
   resolved:     { dot: "bg-green-400",                                          badge: "border-green-900 bg-green-900/20 text-green-400",    label: "RESOLVED"     },
   rejected:     { dot: "bg-[#9a9898]",                                          badge: "border-[#353534] bg-[#1c1b1b] text-[#9a9898]",      label: "REJECTED"     },
+  // Support ticket statuses ("open" shared with disputes above)
+  answered:     { dot: "bg-blue-400",                                          badge: "border-blue-900 bg-blue-900/20 text-blue-400",       label: "ANSWERED"     },
+  closed:       { dot: "bg-[#9a9898]",                                          badge: "border-[#353534] bg-[#1c1b1b] text-[#9a9898]",      label: "CLOSED"       },
 }
 
 export const getFallbackStatus = (raw: string): StatusConfig => ({

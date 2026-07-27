@@ -1,17 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Search, Eye, X } from "lucide-react";
+import { Search, Eye } from "lucide-react";
 import { adminApi } from "@/services/admin";
-import { shipmentsApi } from "@/services/shipments";
 import type { Order, User } from "@/types/api";
-import {
-  formatNGN,
-  formatDate,
-  formatDateTime,
-  buildUserMap,
-} from "@/lib/admin-utils";
+import { formatNGN, formatDate } from "@/lib/admin-utils";
 import {
   AdminPageHeader,
   GlassCard,
@@ -23,7 +18,6 @@ import {
   EmptyState,
 } from "@/components/admin-ui";
 import { cn } from "@/lib/utils";
-import OrderModal from "./components/OrderModal";
 
 const STATUSES = [
   "ALL",
@@ -39,13 +33,11 @@ const STATUSES = [
 
 /* ── Main Page ── */
 export default function AdminOrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<(Order & { user?: User })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeStatus, setActiveStatus] = useState("ALL");
-  const [selectedOrder, setSelectedOrder] = useState<
-    (Order & { user?: User }) | null
-  >(null);
 
   const load = async () => {
     const ordersRes = await adminApi.getAllOrdersWithUsers();
@@ -83,9 +75,8 @@ export default function AdminOrdersPage() {
   }, [orders, search, activeStatus]);
 
   return (
-    <>
-      <div className="space-y-6">
-        <AdminPageHeader title="ORDERS" sub="/ ALL TRANSACTIONS" />
+    <div className="space-y-6">
+      <AdminPageHeader title="ORDERS" sub="/ ALL TRANSACTIONS" />
 
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -169,7 +160,7 @@ export default function AdminOrdersPage() {
                     return (
                       <tr
                         key={order.id}
-                        onClick={() => setSelectedOrder(order)}
+                        onClick={() => router.push(`/admin/orders/${order.id}`)}
                         className="border-l-2 border-transparent hover:border-[#ff6b00] hover:bg-white/[0.02] transition-all cursor-pointer group"
                       >
                         <td className="p-4 font-mono text-[#9a9898] text-xs truncate max-w-[110px]">
@@ -197,7 +188,7 @@ export default function AdminOrdersPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedOrder(order);
+                              router.push(`/admin/orders/${order.id}`);
                             }}
                             className="text-[#9a9898] group-hover:text-[#ff6b00] transition-colors"
                           >
@@ -211,21 +202,7 @@ export default function AdminOrdersPage() {
               </table>
             </div>
           )}
-        </GlassCard>
-      </div>
-
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <OrderModal
-          order={selectedOrder}
-          user={selectedOrder.user}
-          onClose={() => setSelectedOrder(null)}
-          onUpdated={async () => {
-            await load();
-            setSelectedOrder(null);
-          }}
-        />
-      )}
-    </>
+      </GlassCard>
+    </div>
   );
 }
