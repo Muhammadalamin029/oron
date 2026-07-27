@@ -4,8 +4,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { PayHeader, PayFooter } from "@/app/pay/pay-chrome"
 import { paymentLinksApi } from "@/services/payment-links"
 import { ApiError } from "@/lib/api"
 import { toast } from "sonner"
@@ -123,11 +122,11 @@ export default function PaymentLinkCheckoutPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#131313]">
-        <Header />
-        <main className="max-w-[1280px] mx-auto px-6 pt-32 pb-24">
+        <PayHeader />
+        <main className="max-w-[1280px] mx-auto px-6 pt-14 pb-24">
           <div className="h-64 rounded-lg bg-white/5 animate-pulse max-w-2xl mx-auto" />
         </main>
-        <Footer />
+        <PayFooter />
       </div>
     )
   }
@@ -135,8 +134,8 @@ export default function PaymentLinkCheckoutPage() {
   if (notFound || !link) {
     return (
       <div className="min-h-screen bg-[#131313]">
-        <Header />
-        <main className="max-w-[1280px] mx-auto px-6 pt-32 pb-24 flex flex-col items-center text-center">
+        <PayHeader />
+        <main className="max-w-[1280px] mx-auto px-6 pt-14 pb-24 flex flex-col items-center text-center">
           <h1 className="font-display font-bold text-4xl text-white mb-4">
             Link No Longer Available
           </h1>
@@ -150,7 +149,7 @@ export default function PaymentLinkCheckoutPage() {
             BROWSE PRODUCTS
           </Link>
         </main>
-        <Footer />
+        <PayFooter />
       </div>
     )
   }
@@ -158,8 +157,8 @@ export default function PaymentLinkCheckoutPage() {
   if (emailConflict) {
     return (
       <div className="min-h-screen bg-[#131313]">
-        <Header />
-        <main className="max-w-[1280px] mx-auto px-6 pt-32 pb-24 flex flex-col items-center text-center">
+        <PayHeader />
+        <main className="max-w-[1280px] mx-auto px-6 pt-14 pb-24 flex flex-col items-center text-center">
           <h1 className="font-display font-bold text-4xl text-white mb-4">
             Account Already Exists
           </h1>
@@ -174,16 +173,16 @@ export default function PaymentLinkCheckoutPage() {
             TRY A DIFFERENT EMAIL
           </button>
         </main>
-        <Footer />
+        <PayFooter />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-[#131313]">
-      <Header />
+      <PayHeader />
 
-      <main className="max-w-[1280px] mx-auto px-6 pt-28 pb-24">
+      <main className="max-w-[1280px] mx-auto px-6 pt-14 pb-24">
         <h1 className="font-display font-bold text-4xl md:text-5xl text-white mb-2">
           {link.title}
         </h1>
@@ -403,7 +402,7 @@ export default function PaymentLinkCheckoutPage() {
         </div>
       </main>
 
-      <Footer />
+      <PayFooter />
     </div>
   )
 }

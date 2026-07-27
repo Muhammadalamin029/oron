@@ -332,6 +332,36 @@ export interface PaymentStatusResponse {
   seconds_remaining?: number | null;
 }
 
+// Admin dashboard
+export interface DashboardStats {
+  total_revenue: number;
+  total_orders: number;
+  total_products: number;
+  total_customers: number;
+}
+
+export interface DashboardRecentOrder {
+  id: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  customer_name: string;
+  customer_email: string;
+  product_name: string;
+}
+
+export interface DashboardTopProduct {
+  product_id: string;
+  product_name: string;
+  units_sold: number;
+}
+
+export interface AdminDashboardResponse {
+  stats: DashboardStats;
+  recent_orders: DashboardRecentOrder[];
+  top_products: DashboardTopProduct[];
+}
+
 // Notifications
 export interface Notification {
   id: string;

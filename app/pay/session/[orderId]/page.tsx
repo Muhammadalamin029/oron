@@ -4,12 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { PayHeader, PayFooter } from "@/app/pay/pay-chrome"
 import { paymentLinksApi } from "@/services/payment-links"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Copy, Clock, AlertTriangle } from "lucide-react"
 import type { Order, PaymentStatusResponse } from "@/types/api"
 
@@ -151,32 +147,35 @@ export default function PaymentLinkSessionPage() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-16">
-          <div className="h-40 rounded-md bg-muted/30 animate-pulse max-w-2xl mx-auto" />
+      <div className="min-h-screen bg-[#131313]">
+        <PayHeader />
+        <main className="max-w-2xl mx-auto px-6 pt-14 pb-24">
+          <div className="h-40 rounded-lg bg-white/5 animate-pulse" />
         </main>
-        <Footer />
+        <PayFooter />
       </div>
     )
   }
 
   if (notFound || !order) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-16 max-w-2xl text-center">
-          <h1 className="text-2xl font-serif text-foreground mb-2">
+      <div className="min-h-screen bg-[#131313]">
+        <PayHeader />
+        <main className="max-w-2xl mx-auto px-6 pt-14 pb-24 text-center">
+          <h1 className="font-display font-bold text-3xl text-white mb-2">
             We couldn&apos;t find this payment session
           </h1>
-          <p className="text-muted-foreground mb-8">
+          <p className="text-[#9a9898] mb-8">
             This link may be invalid or the session may no longer exist.
           </p>
-          <Link href="/products">
-            <Button>Browse Products</Button>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 bg-[#ff6b00] text-white font-bold text-sm tracking-widest px-8 py-4 rounded-full glow-hover transition-all active:scale-95"
+          >
+            BROWSE PRODUCTS
           </Link>
         </main>
-        <Footer />
+        <PayFooter />
       </div>
     )
   }
@@ -186,137 +185,148 @@ export default function PaymentLinkSessionPage() {
   const isExpired = payment && payment.payment_status === "expired"
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-16 max-w-2xl">
+    <div className="min-h-screen bg-[#131313]">
+      <PayHeader />
+      <main className="max-w-2xl mx-auto px-6 pt-14 pb-24">
         <div className="text-center mb-8">
-          <p className="text-sm text-muted-foreground mb-2">Order</p>
-          <h1 className="text-2xl font-serif text-foreground">{order.id}</h1>
+          <p className="text-sm text-[#9a9898] mb-2">Order</p>
+          <h1 className="font-display font-bold text-2xl text-white">{order.id}</h1>
           <div className="mt-3">
-            <Badge variant={isPaid ? "default" : "secondary"}>{order.status}</Badge>
+            <span
+              className={`inline-block px-4 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase ${
+                isPaid ? "bg-[#ff6b00]/15 text-[#ff6b00]" : "bg-white/5 text-[#9a9898]"
+              }`}
+            >
+              {order.status}
+            </span>
           </div>
         </div>
 
         {isPaid ? (
-          <Card className="mb-8">
-            <CardContent className="pt-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <p className="text-lg font-medium text-foreground mb-1">Payment received</p>
-              <p className="text-sm text-muted-foreground">
-                We're preparing your order. You'll get an email as its status changes.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="bg-[#1a1a1a]/70 backdrop-blur-xl border border-white/5 rounded-lg p-8 text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-[#ff6b00]/15 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-[#ff6b00]" />
+            </div>
+            <p className="text-lg font-semibold text-white mb-1">Payment received</p>
+            <p className="text-sm text-[#9a9898]">
+              We&apos;re preparing your order. You&apos;ll get an email as its status changes.
+            </p>
+          </div>
         ) : (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Complete your payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {initiating && !payment ? (
-                <p className="text-muted-foreground text-sm">Generating your account number...</p>
-              ) : isExpired ? (
-                <div className="text-center py-4">
-                  <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-3" />
-                  <p className="text-foreground font-medium mb-1">Payment window expired</p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    No charge was made. Generate a new account number to try again.
-                  </p>
-                  <Button onClick={initiateCharge} disabled={initiating}>
-                    {initiating ? "Generating..." : "Generate New Account Number"}
-                  </Button>
-                </div>
-              ) : payment?.account_number ? (
-                <>
-                  <div className="rounded-lg border border-border p-4 space-y-3 bg-muted/20">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Bank</span>
-                      <span className="font-medium text-foreground">{payment.bank_name}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Account Number</span>
-                      <span className="flex items-center gap-2">
-                        <span className="font-mono font-semibold text-foreground text-base">
-                          {payment.account_number}
-                        </span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyAccountNumber}>
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Account Name</span>
-                      <span className="font-medium text-foreground">{payment.account_name}</span>
-                    </div>
-                    <div className="flex justify-between text-sm border-t border-border pt-3">
-                      <span className="text-muted-foreground">Amount</span>
-                      <span className="font-semibold text-foreground">
-                        {formatPrice(payment.amount ?? order.total_amount)}
-                      </span>
-                    </div>
+          <div className="bg-[#1a1a1a]/70 backdrop-blur-xl border border-white/5 rounded-lg p-6 mb-8">
+            <h2 className="font-display font-bold text-lg text-white mb-5">Complete your payment</h2>
+
+            {initiating && !payment ? (
+              <p className="text-[#9a9898] text-sm">Generating your account number...</p>
+            ) : isExpired ? (
+              <div className="text-center py-4">
+                <AlertTriangle className="h-8 w-8 text-[#ff6b00] mx-auto mb-3" />
+                <p className="text-white font-medium mb-1">Payment window expired</p>
+                <p className="text-sm text-[#9a9898] mb-4">
+                  No charge was made. Generate a new account number to try again.
+                </p>
+                <button
+                  onClick={initiateCharge}
+                  disabled={initiating}
+                  className="bg-[#ff6b00] text-white font-bold text-sm tracking-widest px-6 py-3 rounded-full glow-hover transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {initiating ? "Generating..." : "Generate New Account Number"}
+                </button>
+              </div>
+            ) : payment?.account_number ? (
+              <>
+                <div className="rounded-lg border border-white/5 bg-[#131313] p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#9a9898]">Bank</span>
+                    <span className="font-medium text-white">{payment.bank_name}</span>
                   </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-[#9a9898]">Account Number</span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono font-semibold text-white text-base">
+                        {payment.account_number}
+                      </span>
+                      <button
+                        onClick={copyAccountNumber}
+                        className="w-6 h-6 flex items-center justify-center rounded text-[#9a9898] hover:text-[#ff6b00] transition-colors"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#9a9898]">Account Name</span>
+                    <span className="font-medium text-white">{payment.account_name}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-t border-white/5 pt-3">
+                    <span className="text-[#9a9898]">Amount</span>
+                    <span className="font-semibold text-white">
+                      {formatPrice(payment.amount ?? order.total_amount)}
+                    </span>
+                  </div>
+                </div>
 
-                  {typeof payment.seconds_remaining === "number" && (
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>Expires in {formatCountdown(payment.seconds_remaining)}</span>
-                    </div>
-                  )}
+                {typeof payment.seconds_remaining === "number" && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-[#9a9898] mt-4">
+                    <Clock className="h-4 w-4" />
+                    <span>Expires in {formatCountdown(payment.seconds_remaining)}</span>
+                  </div>
+                )}
 
-                  {isAwaitingPayment && (
-                    <div className="text-center space-y-3">
-                      <p className="text-xs text-muted-foreground">
-                        Waiting for your transfer — this page updates automatically once received.
-                      </p>
-                      <Button variant="outline" size="sm" onClick={verifyPayment} disabled={verifying}>
-                        {verifying ? "Checking..." : "I have sent the money"}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : null}
-            </CardContent>
-          </Card>
+                {isAwaitingPayment && (
+                  <div className="text-center space-y-3 mt-5">
+                    <p className="text-xs text-[#9a9898]">
+                      Waiting for your transfer — this page updates automatically once received.
+                    </p>
+                    <button
+                      onClick={verifyPayment}
+                      disabled={verifying}
+                      className="border border-[#353534] text-[#e5e2e1] hover:border-[#ff6b00] hover:text-[#ff6b00] transition-colors px-6 py-2.5 rounded-full text-sm font-semibold disabled:opacity-50"
+                    >
+                      {verifying ? "Checking..." : "I have sent the money"}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : null}
+          </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Items</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="bg-[#1a1a1a]/70 backdrop-blur-xl border border-white/5 rounded-lg p-6">
+          <h2 className="font-display font-bold text-base text-white mb-4">Items</h2>
+          <div className="space-y-3">
             {order.items?.map((item) => (
               <div key={item.id} className="flex items-center justify-between text-sm">
-                <span className="text-foreground">
+                <span className="text-[#e5e2e1]">
                   {item.product?.name || "Product"} × {item.quantity}
                 </span>
-                <span className="text-muted-foreground">{formatPrice(item.price)} each</span>
+                <span className="text-[#9a9898]">{formatPrice(item.price)} each</span>
               </div>
             ))}
-            {order.shipping_info && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="font-medium text-foreground mb-1 text-sm">Shipping</p>
-                <p className="text-sm text-muted-foreground">
-                  {order.shipping_info.first_name} {order.shipping_info.last_name} • {order.shipping_info.phone}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {order.shipping_info.address}, {order.shipping_info.city} {order.shipping_info.state}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          {order.shipping_info && (
+            <div className="mt-4 pt-4 border-t border-white/5">
+              <p className="font-medium text-white mb-1 text-sm">Shipping</p>
+              <p className="text-sm text-[#9a9898]">
+                {order.shipping_info.first_name} {order.shipping_info.last_name} • {order.shipping_info.phone}
+              </p>
+              <p className="text-sm text-[#9a9898]">
+                {order.shipping_info.address}, {order.shipping_info.city} {order.shipping_info.state}
+              </p>
+            </div>
+          )}
+        </div>
 
         <div className="flex justify-center mt-8">
-          <Link href="/products" className="w-full sm:w-auto">
-            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-              Continue Shopping
-            </Button>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 bg-[#ff6b00] text-white font-bold text-sm tracking-widest px-8 py-4 rounded-full glow-hover transition-all active:scale-95"
+          >
+            CONTINUE SHOPPING
           </Link>
         </div>
       </main>
-      <Footer />
+      <PayFooter />
     </div>
   )
 }

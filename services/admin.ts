@@ -1,19 +1,7 @@
 import { apiClient } from '@/lib/api';
-import { Order, Product, User, Dispute } from '@/types/api';
-
-export interface DashboardStats {
-  total_revenue: number;
-  total_orders: number;
-  total_products: number;
-  total_customers: number;
-}
+import { Order, User, Dispute, AdminDashboardResponse } from '@/types/api';
 
 export const adminApi = {
-  getAllOrders: async (): Promise<Order[]> => {
-    const response = await apiClient.get<Order[]>('/orders/');
-    return response.data;
-  },
-
   getAllOrdersWithUsers: async (): Promise<(Order & { user?: User })[]> => {
     const response = await apiClient.get<(Order & { user?: User })[]>('/admin/orders');
     return response.data;
@@ -21,11 +9,6 @@ export const adminApi = {
 
   getOrderWithUser: async (orderId: string): Promise<Order & { user?: User }> => {
     const response = await apiClient.get<Order & { user?: User }>(`/admin/orders/${orderId}`);
-    return response.data;
-  },
-
-  getUsers: async (): Promise<User[]> => {
-    const response = await apiClient.get<User[]>('/auth/users');
     return response.data;
   },
 
@@ -48,8 +31,8 @@ export const adminApi = {
     await apiClient.delete(`/products/${id}`);
   },
 
-  getDashboardStats: async (): Promise<DashboardStats> => {
-    const response = await apiClient.get<DashboardStats>('/admin/stats');
+  getDashboard: async (): Promise<AdminDashboardResponse> => {
+    const response = await apiClient.get<AdminDashboardResponse>('/admin/dashboard');
     return response.data;
   }
 };
