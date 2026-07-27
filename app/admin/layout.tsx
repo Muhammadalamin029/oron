@@ -14,6 +14,7 @@ const breadcrumbs: Record<string, string> = {
   "/admin/categories":   "ADMIN / CATEGORIES",
   "/admin/orders":       "ADMIN / ORDERS",
   "/admin/payment-links":"ADMIN / PAYMENT LINKS",
+  "/admin/payments":     "ADMIN / PAYMENTS",
   "/admin/customers":    "ADMIN / CUSTOMERS",
   "/admin/reviews":      "ADMIN / REVIEWS",
   "/admin/disputes":     "ADMIN / DISPUTES",

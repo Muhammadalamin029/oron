@@ -1,372 +1,268 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { CreditCard, Calendar, CheckCircle, XCircle, Clock, Search, User, Package, Eye } from "lucide-react"
+import { Search, X, CreditCard } from "lucide-react"
 import { paymentsApi } from "@/services/payments"
 import type { Payment } from "@/types/api"
+import { formatNGN, formatDateTime } from "@/lib/admin-utils"
+import {
+  AdminPageHeader,
+  GlassCard,
+  StatusBadge,
+  SkeletonRows,
+  DarkInput,
+  OrangeButton,
+  CustomerCell,
+  EmptyState,
+} from "@/components/admin-ui"
+import { cn } from "@/lib/utils"
+
+const STATUSES = ["ALL", "PENDING", "SUCCESS", "FAILED", "EXPIRED"]
+
+function StatTile({ label, value }: { label: string; value: number | string }) {
+  return (
+    <GlassCard className="p-5">
+      <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-2">{label}</p>
+      <p className="font-display font-bold text-2xl text-white">{value}</p>
+    </GlassCard>
+  )
+}
+
+function PaymentDetailModal({ payment, onClose }: { payment: Payment; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-[#111111]/90 backdrop-blur-xl border border-white/5 rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
+        <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]/50">
+          <h3 className="font-display font-bold text-xl text-white tracking-tight">
+            PAYMENT <span className="text-[#9a9898] font-mono text-base">/ #{payment.id.slice(0, 10).toUpperCase()}</span>
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[#9a9898] hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-white/5"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Reference</p>
+              <p className="text-[#e5e2e1] font-mono text-sm">{payment.reference}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Amount</p>
+              <p className="font-display font-bold text-xl text-[#ff6b00]">{formatNGN(payment.amount)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Status</p>
+              <StatusBadge status={payment.status} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Provider</p>
+              <p className="text-[#e5e2e1] text-sm capitalize">{payment.provider}</p>
+            </div>
+            {payment.bank_name && (
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Bank</p>
+                <p className="text-[#e5e2e1] text-sm">{payment.bank_name}</p>
+              </div>
+            )}
+            {payment.account_number && (
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Account Number</p>
+                <p className="text-[#e5e2e1] font-mono text-sm">{payment.account_number}</p>
+              </div>
+            )}
+          </div>
+
+          {payment.order && (
+            <div className="pt-4 border-t border-white/5">
+              <p className="text-[10px] font-bold tracking-[0.2em] text-[#ff6b00] uppercase mb-3">Order</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Order ID</p>
+                  <p className="text-[#e5e2e1] font-mono text-sm">#{payment.order.id.slice(0, 10).toUpperCase()}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-1">Customer</p>
+                  <CustomerCell
+                    name={payment.order.user?.full_name || "Customer"}
+                    email={payment.order.user?.email || payment.order.user_id}
+                  />
+                </div>
+              </div>
+
+              {payment.order.items && payment.order.items.length > 0 && (
+                <div className="mt-4 space-y-1.5">
+                  {payment.order.items.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center text-sm">
+                      <span className="text-[#e5e2e1]">
+                        {item.product?.name || "Product"} × {item.quantity}
+                      </span>
+                      <span className="font-mono text-[#9a9898]">{formatNGN(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [search, setSearch] = useState("")
+  const [activeStatus, setActiveStatus] = useState("ALL")
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
 
-  const fetchPayments = async () => {
-    try {
-      const data = await paymentsApi.getAllPayments()
-      setPayments(data)
-    } catch (error) {
-      console.error("Failed to fetch payments:", error)
-      toast.error("Failed to load payment data")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchPayments()
+    let cancelled = false
+    ;(async () => {
+      try {
+        setLoading(true)
+        const data = await paymentsApi.getAllPayments()
+        if (!cancelled) setPayments(data)
+      } catch (error: any) {
+        if (!cancelled) toast.error(error?.message || "Failed to load payment data")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "success":
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Success</Badge>
-      case "failed":
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Pending</Badge>
-      default:
-        return <Badge variant="outline">{status}</Badge>
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-    }).format(amount)
-  }
-
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = searchTerm === "" || 
-      payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.order?.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.order?.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.order?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === "all" || payment.status === statusFilter
-    
-    return matchesSearch && matchesStatus
-  })
+  const filtered = useMemo(() => {
+    return payments.filter((p) => {
+      const hay = `${p.id} ${p.reference} ${p.order?.id || ""} ${p.order?.user?.full_name || ""} ${p.order?.user?.email || ""}`.toLowerCase()
+      const matchesSearch = hay.includes(search.toLowerCase())
+      const matchesStatus = activeStatus === "ALL" || p.status.toLowerCase() === activeStatus.toLowerCase()
+      return matchesSearch && matchesStatus
+    })
+  }, [payments, search, activeStatus])
 
   const handleViewDetails = async (payment: Payment) => {
     try {
-      const detailedPayment = await paymentsApi.getPaymentDetails(payment.id)
-      setSelectedPayment(detailedPayment)
-    } catch (error) {
+      const detailed = await paymentsApi.getPaymentDetails(payment.id)
+      setSelectedPayment(detailed)
+    } catch {
       toast.error("Failed to fetch payment details")
     }
   }
 
-  if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-background">
-          <Header />
-          <main className="container mx-auto px-4 py-8">
-            <div className="max-w-6xl mx-auto">
-              <div className="space-y-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-24 rounded-md bg-muted/30 animate-pulse" />
-                ))}
-              </div>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </ProtectedRoute>
-    )
-  }
-
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-serif tracking-[0.2em] mb-2">Payment Management</h1>
-              <p className="text-muted-foreground">
-                Monitor and manage all payment transactions in the marketplace
-              </p>
-            </div>
+    <div className="space-y-6">
+      <AdminPageHeader title="PAYMENTS" sub="/ ALL TRANSACTIONS" />
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{payments.length}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Successful</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {payments.filter(p => p.status === "success").length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {payments.filter(p => p.status === "pending").length}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Failed</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    {payments.filter(p => p.status === "failed").length}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  All Payments
-                </CardTitle>
-                <CardDescription>
-                  Comprehensive view of all payment transactions with customer and order details
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by payment ID, order, customer..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {filteredPayments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No payments found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-sm text-muted-foreground">
-                      {filteredPayments.length} of {payments.length} payments
-                    </div>
-                    <div className="border rounded-lg">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Payment Details</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredPayments.map((payment) => (
-                            <TableRow key={payment.id}>
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <p className="font-medium font-mono text-sm">
-                                    {payment.id.slice(0, 12)}...
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Ref: {payment.reference.slice(0, 12)}...
-                                  </p>
-                                  <Badge variant="outline" className="text-xs capitalize">
-                                    {payment.provider}
-                                  </Badge>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-muted-foreground" />
-                                    <p className="font-medium">
-                                      {payment.order?.user?.full_name || 'Unknown'}
-                                    </p>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">
-                                    {payment.order?.user?.email || 'No email'}
-                                  </p>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <Package className="h-4 w-4 text-muted-foreground" />
-                                    <p className="font-medium">
-                                      #{payment.order?.id?.slice(-6) || 'Unknown'}
-                                    </p>
-                                  </div>
-                                  {payment.order?.items && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {payment.order.items.length} items
-                                    </p>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <p className="font-medium">
-                                  {formatCurrency(payment.amount)}
-                                </p>
-                              </TableCell>
-                              <TableCell>
-                                {getStatusBadge(payment.status)}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Calendar className="h-4 w-4" />
-                                  <div>
-                                    {new Date(payment.created_at).toLocaleDateString()}
-                                    <p className="text-xs">
-                                      {new Date(payment.created_at).toLocaleTimeString()}
-                                    </p>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewDetails(payment)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Payment Details Modal */}
-            {selectedPayment && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                  <CardHeader>
-                    <CardTitle>Payment Details</CardTitle>
-                    <CardDescription>Complete information about this payment transaction</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">Payment ID</p>
-                        <p className="font-mono text-sm">{selectedPayment.id}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Reference</p>
-                        <p className="font-mono text-sm">{selectedPayment.reference}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Amount</p>
-                        <p className="font-medium">{formatCurrency(selectedPayment.amount)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Status</p>
-                        <div>{getStatusBadge(selectedPayment.status)}</div>
-                      </div>
-                    </div>
-                    
-                    {selectedPayment.order && (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium mb-2">Order Information</h4>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="font-medium">Order ID</p>
-                            <p>#{selectedPayment.order.id.slice(-6)}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium">Customer</p>
-                            <p>{selectedPayment.order.user?.full_name}</p>
-                            <p className="text-muted-foreground">{selectedPayment.order.user?.email}</p>
-                          </div>
-                        </div>
-                        
-                        {selectedPayment.order.items && selectedPayment.order.items.length > 0 && (
-                          <div className="mt-4">
-                            <h5 className="font-medium mb-2">Order Items</h5>
-                            <div className="space-y-2">
-                              {selectedPayment.order.items.map((item) => (
-                                <div key={item.id} className="flex justify-between text-sm">
-                                  <span>{item.product?.name} x {item.quantity}</span>
-                                  <span>{formatCurrency(item.price * item.quantity)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-end pt-4">
-                      <Button onClick={() => setSelectedPayment(null)}>
-                        Close
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        </main>
-        <Footer />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatTile label="Total" value={payments.length} />
+        <StatTile label="Successful" value={payments.filter((p) => p.status === "success").length} />
+        <StatTile label="Pending" value={payments.filter((p) => p.status === "pending").length} />
+        <StatTile label="Failed" value={payments.filter((p) => p.status === "failed").length} />
       </div>
-    </ProtectedRoute>
+
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <DarkInput
+          placeholder="Search by payment ID, reference, order, customer..."
+          value={search}
+          onChange={setSearch}
+          icon={<Search className="h-4 w-4" />}
+          className="w-full md:w-96"
+        />
+        <div className="flex flex-wrap gap-2">
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => setActiveStatus(s)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all",
+                activeStatus === s
+                  ? "bg-[#ff6b00] text-white"
+                  : "bg-[#0a0a0a] border border-[#1a1a1a] text-[#9a9898] hover:border-[#ff6b00] hover:text-[#ff6b00]"
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <GlassCard className="overflow-hidden">
+        {loading ? (
+          <SkeletonRows count={6} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            title="No payments found"
+            message="Try adjusting your search or status filter."
+            icon={<CreditCard className="h-8 w-8" />}
+            action={
+              <OrangeButton
+                onClick={() => {
+                  setSearch("")
+                  setActiveStatus("ALL")
+                }}
+              >
+                CLEAR FILTERS
+              </OrangeButton>
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 bg-[#0a0a0a]/50">
+                  {["Payment", "Customer", "Order", "Amount", "Status", "Date"].map((h) => (
+                    <th key={h} className="p-4 text-[10px] font-bold tracking-[0.15em] text-[#9a9898] uppercase font-normal">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {filtered.map((payment) => (
+                  <tr
+                    key={payment.id}
+                    onClick={() => handleViewDetails(payment)}
+                    className="border-l-2 border-transparent hover:border-[#ff6b00] hover:bg-white/[0.02] transition-all cursor-pointer group"
+                  >
+                    <td className="p-4">
+                      <p className="font-mono text-sm text-[#e5e2e1]">{payment.id.slice(0, 10).toUpperCase()}</p>
+                      <p className="text-xs text-[#9a9898] capitalize">{payment.provider}</p>
+                    </td>
+                    <td className="p-4">
+                      <CustomerCell
+                        name={payment.order?.user?.full_name || "Customer"}
+                        email={payment.order?.user?.email || "—"}
+                      />
+                    </td>
+                    <td className="p-4 font-mono text-[#9a9898] text-xs">
+                      {payment.order?.id ? `#${payment.order.id.slice(0, 10).toUpperCase()}` : "—"}
+                    </td>
+                    <td className="p-4 font-display font-bold text-white">{formatNGN(payment.amount)}</td>
+                    <td className="p-4">
+                      <StatusBadge status={payment.status} />
+                    </td>
+                    <td className="p-4 text-[#c6c6c6] text-sm whitespace-nowrap">
+                      {formatDateTime(payment.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </GlassCard>
+
+      {selectedPayment && (
+        <PaymentDetailModal payment={selectedPayment} onClose={() => setSelectedPayment(null)} />
+      )}
+    </div>
   )
 }

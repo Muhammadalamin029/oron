@@ -16,6 +16,7 @@ import {
   LogOut,
   ExternalLink,
   Link2,
+  CreditCard,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
@@ -27,6 +28,7 @@ const navItems = [
   { href: "/admin/categories",       label: "Categories",    icon: LayoutGrid      },
   { href: "/admin/orders",           label: "Orders",        icon: ShoppingCart    },
   { href: "/admin/payment-links",    label: "Payment Links", icon: Link2           },
+  { href: "/admin/payments",         label: "Payments",      icon: CreditCard      },
   { href: "/admin/customers",        label: "Customers",     icon: Users           },
   { href: "/admin/reviews",          label: "Reviews",       icon: Star            },
   { href: "/admin/disputes",         label: "Disputes",      icon: Scale           },
