@@ -356,10 +356,23 @@ export interface DashboardTopProduct {
   units_sold: number;
 }
 
+export interface DashboardNeedsAttention {
+  open_disputes: number;
+  open_support_tickets: number;
+  pending_payments: number;
+}
+
+export interface DashboardRevenuePoint {
+  date: string; // ISO date, "YYYY-MM-DD"
+  revenue: number;
+}
+
 export interface AdminDashboardResponse {
   stats: DashboardStats;
   recent_orders: DashboardRecentOrder[];
   top_products: DashboardTopProduct[];
+  needs_attention: DashboardNeedsAttention;
+  revenue_trend: DashboardRevenuePoint[];
 }
 
 // Notifications

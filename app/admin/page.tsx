@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { Wallet, ShoppingCart, Package, Users, TrendingUp } from "lucide-react"
+import { format } from "date-fns"
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  type TooltipProps,
+} from "recharts"
+import { Wallet, ShoppingCart, Package, Users, TrendingUp, Scale, Headphones, CreditCard } from "lucide-react"
 import { adminApi } from "@/services/admin"
 import type { AdminDashboardResponse } from "@/types/api"
 import { cn } from "@/lib/utils"
@@ -19,6 +30,30 @@ import {
   AdminTd,
   CustomerCell,
 } from "@/components/admin-ui"
+
+const REVENUE_TREND_DAYS = 30
+
+// API returns bare "YYYY-MM-DD" strings. `new Date("2026-07-28")` parses as UTC midnight,
+// which date-fns' format() (local-time-based) can render as the *previous* day for any
+// admin west of UTC — anchor to local midnight explicitly to avoid that off-by-one.
+function parseTrendDate(dateStr: string) {
+  return new Date(`${dateStr}T00:00:00`)
+}
+
+function formatTrendDate(dateStr: string) {
+  return format(parseTrendDate(dateStr), "MMM d")
+}
+
+function RevenueTooltip({ active, payload }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null
+  const point = payload[0].payload as { date: string; revenue: number }
+  return (
+    <div className="bg-[#1a1a1a] border border-white/10 rounded px-3 py-2 text-xs shadow-lg">
+      <p className="text-[#9a9898] mb-0.5">{format(parseTrendDate(point.date), "MMM d, yyyy")}</p>
+      <p className="text-white font-semibold">{formatNGN(point.revenue)}</p>
+    </div>
+  )
+}
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -44,12 +79,20 @@ export default function AdminDashboard() {
   const stats = dashboard?.stats
   const recentOrders = dashboard?.recent_orders ?? []
   const topProducts = dashboard?.top_products ?? []
+  const needsAttention = dashboard?.needs_attention
+  const revenueTrend = dashboard?.revenue_trend ?? []
 
   const kpis = [
     { label: "TOTAL REVENUE",    value: loading || !stats ? "—" : formatNGN(stats.total_revenue),    icon: Wallet,       highlight: true,  live: false },
     { label: "ACTIVE ORDERS",    value: loading || !stats ? "—" : String(stats.total_orders),         icon: ShoppingCart, highlight: false, live: true  },
     { label: "CATALOG SIZE",     value: loading || !stats ? "—" : String(stats.total_products),       icon: Package,      highlight: false, live: false },
     { label: "TOTAL CUSTOMERS",  value: loading || !stats ? "—" : String(stats.total_customers),      icon: Users,        highlight: false, live: false },
+  ]
+
+  const attentionItems = [
+    { label: "OPEN DISPUTES",    count: needsAttention?.open_disputes ?? 0,        href: "/admin/disputes", icon: Scale       },
+    { label: "SUPPORT TICKETS",  count: needsAttention?.open_support_tickets ?? 0, href: "/admin/support",  icon: Headphones  },
+    { label: "PENDING PAYMENTS", count: needsAttention?.pending_payments ?? 0,     href: "/admin/payments", icon: CreditCard  },
   ]
 
   return (
@@ -94,6 +137,82 @@ export default function AdminDashboard() {
           </GlassCard>
         ))}
       </section>
+
+      {/* Needs Attention */}
+      <section>
+        <p className="text-[10px] font-bold tracking-[0.18em] text-[#9a9898] uppercase mb-3">
+          NEEDS ATTENTION
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {attentionItems.map((item) => {
+            const hasItems = !loading && item.count > 0
+            return (
+              <Link key={item.label} href={item.href} className="block h-full">
+                <GlassCard className="p-6 h-full flex flex-col justify-between transition-colors duration-300 hover:border-[#ff6b00]/40">
+                  <div className="flex justify-between items-start mb-5">
+                    <span className="text-[10px] font-bold tracking-[0.18em] text-[#9a9898] uppercase">
+                      {item.label}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {hasItems && (
+                        <div className="flex items-center gap-1.5 bg-[#201f1f] border border-[#353534] px-2 py-1 rounded">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ff6b00] animate-pulse" />
+                          <span className="text-[9px] font-bold text-[#e5e2e1] tracking-widest">LIVE</span>
+                        </div>
+                      )}
+                      <item.icon className="h-4 w-4 text-[#9a9898]" />
+                    </div>
+                  </div>
+                  <span className={cn("font-display font-bold text-3xl block", hasItems ? "text-[#ff6b00]" : "text-white")}>
+                    {loading || !needsAttention ? "—" : item.count}
+                  </span>
+                </GlassCard>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Revenue Trend */}
+      <GlassCard>
+        <SectionHeader title="REVENUE TREND" sub={`LAST ${REVENUE_TREND_DAYS} DAYS`} />
+        <div className="p-6 h-72" role="img" aria-label={`Revenue trend, last ${REVENUE_TREND_DAYS} days`}>
+          {loading ? (
+            <div className="h-full rounded bg-[#1c1b1b] animate-pulse" />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ff6b00" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#ff6b00" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatTrendDate}
+                  tick={{ fill: "#9a9898", fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  minTickGap={24}
+                />
+                <YAxis hide />
+                <Tooltip content={<RevenueTooltip />} cursor={{ stroke: "#ff6b00", strokeOpacity: 0.3 }} />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#ff6b00"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#ff6b00", stroke: "#1a1a1a", strokeWidth: 2 }}
+                  fill="url(#revenueFill)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </GlassCard>
 
       {/* Data panels */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
