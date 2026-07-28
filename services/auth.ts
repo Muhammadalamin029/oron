@@ -52,6 +52,11 @@ export const authApi = {
     return response.data;
   },
 
+  forgotPassword: async (email: string): Promise<{ msg: string }> => {
+    const response = await apiClient.post<{ msg: string }>('/auth/forgot-password', { email });
+    return response.data;
+  },
+
   // Get verification status
   getVerificationStatus: async (): Promise<{ is_verified: boolean; email: string }> => {
     const response = await apiClient.get<{ is_verified: boolean; email: string }>('/auth/verification-status');

@@ -71,7 +71,7 @@ export interface AuthResponse {
 }
 
 export interface SetPasswordResponse extends AuthResponse {
-  order_id: string;
+  order_id?: string;
 }
 
 // Order types

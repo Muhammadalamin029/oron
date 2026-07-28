@@ -46,7 +46,7 @@ function SetPasswordPageContent() {
       const result = await authApi.setPassword(token, password)
       applySession(result)
       toast.success("Password set! You're now signed in.")
-      router.push(`/orders/${result.order_id}`)
+      router.push(result.order_id ? `/orders/${result.order_id}` : "/account")
     } catch (error: any) {
       toast.error(error?.message || "Failed to set password")
     } finally {
@@ -55,8 +55,8 @@ function SetPasswordPageContent() {
   }
 
   return (
-    <AuthShell tagline="One last step and your order details are ready to view.">
-      <AuthHeading title="Set your password" sub="This verifies your email and unlocks your order." />
+    <AuthShell tagline="Set a password to access your account, orders, and more.">
+      <AuthHeading title="Set your password" sub="This verifies your email and unlocks your account." />
 
       <GlassCard className="p-6 sm:p-8">
         {!token ? (

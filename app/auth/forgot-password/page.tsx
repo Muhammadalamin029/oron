@@ -1,25 +1,33 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { ArrowLeft, Mail } from "lucide-react"
+import { authApi } from "@/services/auth"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordPageContent() {
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [email, setEmail] = useState("")
+  const [isSubmitted, setIsSubmitted] = useState(searchParams.get("sent") === "1")
+  const [email, setEmail] = useState(searchParams.get("email") || "")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    setIsSubmitted(true)
-    toast.success("Reset link sent to your email")
-
-    setIsLoading(false)
+    try {
+      await authApi.forgotPassword(email)
+      setIsSubmitted(true)
+      toast.success("If an account exists, we've sent a link to your email")
+    } catch (error: any) {
+      toast.error(error?.message || "Something went wrong. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (isSubmitted) {
@@ -31,7 +39,7 @@ export default function ForgotPasswordPage() {
           </div>
           <h2 className="font-display font-bold text-2xl text-white mb-4">Check your email</h2>
           <p className="text-[#9a9898] mb-8">
-            We&apos;ve sent a password reset link to{" "}
+            We&apos;ve sent a link to access your account to{" "}
             <span className="font-medium text-white">{email}</span>
           </p>
           <Link href="/auth/login">
@@ -86,5 +94,13 @@ export default function ForgotPasswordPage() {
         </Link>
       </div>
     </AuthShell>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ForgotPasswordPageContent />
+    </Suspense>
   )
 }

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { ApiError } from "@/lib/api"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
 
@@ -39,6 +40,10 @@ function LoginPageContent() {
       }
       router.push(user.is_admin ? "/admin" : "/")
     } catch (error: any) {
+      if (error instanceof ApiError && error.status === 403) {
+        router.push(`/auth/forgot-password?sent=1&email=${encodeURIComponent(formData.email)}`)
+        return
+      }
       toast.error(error.message || "Please enter valid credentials")
     } finally {
       setIsLoading(false)
