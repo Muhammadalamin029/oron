@@ -21,6 +21,7 @@ import { Footer } from "@/components/footer"
 import { productsApi } from "@/services/products"
 import { apiProductsToWatches } from "@/lib/product-mapper"
 import type { Watch as WatchType } from "@/lib/cart-context"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const categories = [
   { icon: Smartphone,     label: "Smartphones",   href: "/products" },
@@ -42,8 +43,8 @@ export default function HomePage() {
         setLoading(true)
         const products = await productsApi.getProducts({ limit: 8 })
         if (!cancelled) setFeaturedWatches(apiProductsToWatches(products))
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load products")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load products"))
       } finally {
         if (!cancelled) setLoading(false)
       }

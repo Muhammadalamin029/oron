@@ -30,6 +30,7 @@ import {
   AdminTd,
   CustomerCell,
 } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const REVENUE_TREND_DAYS = 30
 
@@ -67,8 +68,8 @@ export default function AdminDashboard() {
         const data = await adminApi.getDashboard()
         if (cancelled) return
         setDashboard(data)
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load dashboard")
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load dashboard"))
       } finally {
         if (!cancelled) setLoading(false)
       }

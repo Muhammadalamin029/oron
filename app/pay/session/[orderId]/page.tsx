@@ -8,6 +8,7 @@ import { PayHeader, PayFooter } from "@/app/pay/pay-chrome"
 import { paymentLinksApi } from "@/services/payment-links"
 import { CheckCircle, Copy, Clock, AlertTriangle } from "lucide-react"
 import type { Order, PaymentStatusResponse } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const POLL_INTERVAL_MS = 5000
 
@@ -35,16 +36,23 @@ export default function PaymentLinkSessionPage() {
   const [initiating, setInitiating] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const loadOrder = useCallback(async () => {
     try {
       setFetching(true)
       const data = await paymentLinksApi.sessionOrder(params.orderId)
-      setOrder(data)
+      if (mountedRef.current) setOrder(data)
     } catch {
-      setNotFound(true)
+      if (mountedRef.current) setNotFound(true)
     } finally {
-      setFetching(false)
+      if (mountedRef.current) setFetching(false)
     }
   }, [params.orderId])
 
@@ -62,6 +70,7 @@ export default function PaymentLinkSessionPage() {
   const checkStatus = useCallback(async () => {
     try {
       const status = await paymentLinksApi.sessionStatus(params.orderId)
+      if (!mountedRef.current) return
       setPayment(status)
       if (status.order_status === "paid") {
         stopPolling()
@@ -76,6 +85,7 @@ export default function PaymentLinkSessionPage() {
     try {
       setInitiating(true)
       const charge = await paymentLinksApi.sessionCharge(params.orderId)
+      if (!mountedRef.current) return
       setPayment({
         order_id: charge.order_id,
         payment_id: charge.payment_id,
@@ -88,10 +98,10 @@ export default function PaymentLinkSessionPage() {
         expires_at: charge.expires_at,
         seconds_remaining: null,
       })
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to generate account number")
+    } catch (error: unknown) {
+      if (mountedRef.current) toast.error(getErrorMessage(error, "Failed to generate account number"))
     } finally {
-      setInitiating(false)
+      if (mountedRef.current) setInitiating(false)
     }
   }, [params.orderId])
 
@@ -122,6 +132,7 @@ export default function PaymentLinkSessionPage() {
     try {
       setVerifying(true)
       const status = await paymentLinksApi.sessionVerify(params.orderId)
+      if (!mountedRef.current) return
       setPayment(status)
       if (status.order_status === "paid") {
         stopPolling()
@@ -132,10 +143,10 @@ export default function PaymentLinkSessionPage() {
       } else {
         toast("Still checking — we'll keep polling automatically.")
       }
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to verify payment")
+    } catch (error: unknown) {
+      if (mountedRef.current) toast.error(getErrorMessage(error, "Failed to verify payment"))
     } finally {
-      setVerifying(false)
+      if (mountedRef.current) setVerifying(false)
     }
   }, [params.orderId, stopPolling])
 

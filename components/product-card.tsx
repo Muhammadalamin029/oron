@@ -2,19 +2,18 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { ShoppingBag, Heart } from "lucide-react"
+import { ShoppingBag } from "lucide-react"
 import { useCart, type Watch } from "@/lib/cart-context"
 import { toast } from "sonner"
-import { useState } from "react"
+import { memo } from "react"
 import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
   watch: Watch
 }
 
-export function ProductCard({ watch }: ProductCardProps) {
+function ProductCardImpl({ watch }: ProductCardProps) {
   const { addToCart } = useCart()
-  const [wished, setWished] = useState(false)
 
   const handleAddToCart = () => {
     addToCart(watch)
@@ -47,20 +46,6 @@ export function ProductCard({ watch }: ProductCardProps) {
             <span className="text-[#9a9898] text-sm font-semibold tracking-widest">OUT OF STOCK</span>
           </div>
         )}
-
-        {/* Wishlist button */}
-        <button
-          onClick={() => setWished((w) => !w)}
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/50 border border-[#353534] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 hover:border-[#ff6b00]"
-          aria-label="Add to wishlist"
-        >
-          <Heart
-            className={cn(
-              "h-3.5 w-3.5 transition-colors",
-              wished ? "fill-[#ff6b00] text-[#ff6b00]" : "text-[#9a9898]"
-            )}
-          />
-        </button>
 
         {/* Product image */}
         <Link href={`/products/${watch.id}`}>
@@ -111,3 +96,5 @@ export function ProductCard({ watch }: ProductCardProps) {
     </div>
   )
 }
+
+export const ProductCard = memo(ProductCardImpl)

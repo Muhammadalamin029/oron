@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Order } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -62,8 +63,8 @@ export default function OrdersPage() {
         setFetching(true)
         const data = await ordersApi.getMyOrders()
         if (!cancelled) setOrders(data)
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load orders")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load orders"))
       } finally {
         if (!cancelled) setFetching(false)
       }

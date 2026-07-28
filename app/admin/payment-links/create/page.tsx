@@ -9,6 +9,7 @@ import { paymentLinksApi } from "@/services/payment-links"
 import { formatNGN } from "@/lib/admin-utils"
 import type { Product } from "@/types/api"
 import { AdminPageHeader, GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 type SelectedItem = {
   product: Product
@@ -88,8 +89,8 @@ export default function CreatePaymentLinkPage() {
       })
       setCreatedUrl(`${window.location.origin}/pay/${link.slug}`)
       toast.success("Payment link created")
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to create payment link")
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to create payment link"))
     } finally {
       setCreating(false)
     }

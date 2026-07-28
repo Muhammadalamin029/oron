@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Bell, Globe, CreditCard } from "lucide-react"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export function PreferencesSection() {
   const [isLoading, setIsLoading] = useState(false)
@@ -27,8 +28,8 @@ export function PreferencesSection() {
       // Note: Backend would need a preferences update endpoint
       // For now, we'll just show a success message
       toast.success("Preferences saved successfully!")
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to save preferences")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to save preferences"))
     } finally {
       setIsLoading(false)
     }

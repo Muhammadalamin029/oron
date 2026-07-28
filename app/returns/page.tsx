@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Package, Calendar, RefreshCw } from "lucide-react"
 import { settingsApi } from "@/services/settings"
+import { sanitizeRichHtml } from "@/lib/sanitize-html"
 import { toast } from "sonner"
 
 export default function ReturnsPage() {
@@ -15,9 +16,11 @@ export default function ReturnsPage() {
   const [lastUpdated, setLastUpdated] = useState("")
 
   useEffect(() => {
+    let cancelled = false
     const fetchReturns = async () => {
       try {
         const returns = await settingsApi.getSetting("return_policy")
+        if (cancelled) return
         if (returns) {
           setReturnsContent(returns.value)
           setLastUpdated(returns.updated_at ? new Date(returns.updated_at).toLocaleDateString() : "")
@@ -25,15 +28,19 @@ export default function ReturnsPage() {
           setReturnsContent(getDefaultReturnsContent())
         }
       } catch (error) {
+        if (cancelled) return
         console.error("Failed to fetch return policy:", error)
         setReturnsContent(getDefaultReturnsContent())
         toast.error("Failed to load return policy")
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchReturns()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const getDefaultReturnsContent = () => {
@@ -175,7 +182,7 @@ export default function ReturnsPage() {
             <CardContent>
               <div 
                 className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: returnsContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(returnsContent) }}
               />
             </CardContent>
           </Card>

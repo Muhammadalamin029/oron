@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { ApiError } from "@/lib/api"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 function LoginPageContent() {
   const router = useRouter()
@@ -39,12 +40,12 @@ function LoginPageContent() {
         return
       }
       router.push(user.is_admin ? "/admin" : "/")
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 403) {
         router.push(`/auth/forgot-password?sent=1&email=${encodeURIComponent(formData.email)}`)
         return
       }
-      toast.error(error.message || "Please enter valid credentials")
+      toast.error(getErrorMessage(error, "Please enter valid credentials"))
     } finally {
       setIsLoading(false)
     }

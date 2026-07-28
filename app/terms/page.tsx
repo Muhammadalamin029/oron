@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FileText, Calendar, Shield } from "lucide-react"
 import { settingsApi } from "@/services/settings"
+import { sanitizeRichHtml } from "@/lib/sanitize-html"
 import { toast } from "sonner"
 
 export default function TermsPage() {
@@ -15,9 +16,11 @@ export default function TermsPage() {
   const [lastUpdated, setLastUpdated] = useState("")
 
   useEffect(() => {
+    let cancelled = false
     const fetchTerms = async () => {
       try {
         const terms = await settingsApi.getSetting("terms_of_service")
+        if (cancelled) return
         if (terms) {
           setTermsContent(terms.value)
           setLastUpdated(terms.updated_at ? new Date(terms.updated_at).toLocaleDateString() : "")
@@ -25,15 +28,19 @@ export default function TermsPage() {
           setTermsContent(getDefaultTermsContent())
         }
       } catch (error) {
+        if (cancelled) return
         console.error("Failed to fetch terms:", error)
         setTermsContent(getDefaultTermsContent())
         toast.error("Failed to load terms of service")
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchTerms()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const getDefaultTermsContent = () => {
@@ -113,7 +120,7 @@ export default function TermsPage() {
             <CardContent>
               <div 
                 className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: termsContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(termsContent) }}
               />
             </CardContent>
           </Card>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { authApi } from "@/services/auth"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export function ProfileSection() {
   const { user, setUser } = useAuth()
@@ -32,8 +33,8 @@ export function ProfileSection() {
       
       toast.success("Profile updated successfully!")
       setIsEditing(false)
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to update profile")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update profile"))
     } finally {
       setIsLoading(false)
     }

@@ -28,11 +28,9 @@ import { cn } from "@/lib/utils"
 
 const navLeft = [
   { href: "/products", label: "Shop" },
-  { href: "/products", label: "Tech" },
 ]
 
 const navRight = [
-  { href: "/products", label: "Archive" },
   { href: "/contact", label: "Custom" },
 ]
 

@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/api"
 import { toast } from "sonner"
 import { ShieldCheck, Zap, Minus, Plus, Tag } from "lucide-react"
 import type { PaymentLinkPublic } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const NIGERIAN_STATES = [
   "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
@@ -108,11 +109,11 @@ export default function PaymentLinkCheckoutPage() {
         },
       })
       router.replace(`/pay/session/${result.order_id}`)
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 409) {
         setEmailConflict(true)
       } else {
-        toast.error(error?.message || "Checkout failed")
+        toast.error(getErrorMessage(error, "Checkout failed"))
       }
     } finally {
       setIsProcessing(false)

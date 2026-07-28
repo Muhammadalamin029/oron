@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { settingsApi } from "@/services/settings"
 import { AdminPageHeader, GlassCard, SkeletonRows, OrangeButton } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const TABS = ["general", "notifications", "shipping", "contact", "policies"] as const
 type Tab = (typeof TABS)[number]
@@ -207,8 +208,8 @@ export default function AdminSettingsPage() {
           privacy_policy: map.privacy_policy ?? prev.privacy_policy,
           return_policy: map.return_policy ?? prev.return_policy,
         }))
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load settings")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load settings"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -244,8 +245,8 @@ export default function AdminSettingsPage() {
       setInitialMap(nextInitial)
 
       toast.success("Settings saved successfully")
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to save settings")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to save settings"))
     } finally {
       setSavingTab(null)
     }
@@ -257,8 +258,8 @@ export default function AdminSettingsPage() {
       await settingsApi.updateSetting(key, { value: policies[key] })
       setInitialMap((prev) => ({ ...prev, [key]: policies[key] }))
       toast.success(`${POLICY_META[key].label} saved`)
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to save policy")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to save policy"))
     } finally {
       setSavingPolicy(null)
     }

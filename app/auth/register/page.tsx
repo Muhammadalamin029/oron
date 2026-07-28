@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { getPasswordError } from "@/lib/validation"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -48,8 +49,8 @@ export default function RegisterPage() {
       await register(formData.email, formData.name, formData.password)
       toast.success("Account created! Please check your email to verify.")
       router.push("/auth/login")
-    } catch (error: any) {
-      toast.error(error.message || "Registration failed")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Registration failed"))
     } finally {
       setIsLoading(false)
     }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export function PasswordSection() {
   const [isLoading, setIsLoading] = useState(false)
@@ -39,8 +40,8 @@ export function PasswordSection() {
         new_password: "",
         confirm_password: "",
       })
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to change password")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to change password"))
     } finally {
       setIsLoading(false)
     }

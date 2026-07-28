@@ -18,6 +18,7 @@ import {
   EmptyState,
 } from "@/components/admin-ui";
 import { cn } from "@/lib/utils";
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const STATUSES = [
   "ALL",
@@ -50,8 +51,8 @@ export default function AdminOrdersPage() {
       try {
         setLoading(true);
         await load();
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load orders");
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load orders"));
       } finally {
         if (!cancelled) setLoading(false);
       }

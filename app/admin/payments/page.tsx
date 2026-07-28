@@ -17,6 +17,7 @@ import {
   EmptyState,
 } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const STATUSES = ["ALL", "PENDING", "SUCCESS", "FAILED", "EXPIRED"]
 
@@ -128,8 +129,8 @@ export default function AdminPaymentsPage() {
         setLoading(true)
         const data = await paymentsApi.getAllPayments()
         if (!cancelled) setPayments(data)
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load payment data")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load payment data"))
       } finally {
         if (!cancelled) setLoading(false)
       }

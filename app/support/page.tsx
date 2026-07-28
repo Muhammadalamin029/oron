@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { supportApi } from "@/services/support"
 import { useAuth } from "@/contexts/auth-context"
 import type { SupportTicket } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function SupportPage() {
   const router = useRouter()
@@ -45,8 +46,8 @@ export default function SupportPage() {
       try {
         setFetching(true)
         await load()
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load tickets")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load tickets"))
       } finally {
         if (!cancelled) setFetching(false)
       }
@@ -67,8 +68,8 @@ export default function SupportPage() {
       try {
         const ticket = await supportApi.getTicket(selectedId)
         if (!cancelled) setSelected(ticket)
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load ticket")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load ticket"))
       }
     })()
     return () => {
@@ -112,8 +113,8 @@ export default function SupportPage() {
                     setCreateForm({ subject: "", message: "" })
                     await load()
                     setSelectedId(created.id)
-                  } catch (error: any) {
-                    toast.error(error?.message || "Failed to create ticket")
+                  } catch (error: unknown) {
+                    toast.error(getErrorMessage(error, "Failed to create ticket"))
                   } finally {
                     setCreating(false)
                   }
@@ -253,8 +254,8 @@ export default function SupportPage() {
                         const fresh = await supportApi.getTicket(selectedId)
                         setSelected(fresh)
                         toast.success("Message sent")
-                      } catch (error: any) {
-                        toast.error(error?.message || "Failed to send")
+                      } catch (error: unknown) {
+                        toast.error(getErrorMessage(error, "Failed to send"))
                       } finally {
                         setSending(false)
                       }

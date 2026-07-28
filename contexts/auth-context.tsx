@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '@/services/auth';
+import { tokenStore } from '@/lib/token-store';
 import { User, AuthResponse } from '@/types/api';
 
 interface AuthContextType {
@@ -28,16 +29,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing token on mount (only on client side)
     if (typeof window === 'undefined') return;
     
-    const storedToken = localStorage.getItem('access_token');
-    const storedRefreshToken = localStorage.getItem('refresh_token');
+    const storedToken = tokenStore.getAccess();
+    const storedRefreshToken = tokenStore.getRefresh();
     if (storedToken) {
       setToken(storedToken);
       // Verify token and get user data
       authApi.getCurrentUser()
         .then(setUser)
         .catch(() => {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+          tokenStore.clearAll();
           setToken(null);
         })
         .finally(() => setLoading(false));
@@ -46,10 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authApi.getCurrentUser()
         .then((u) => {
           setUser(u);
-          setToken(localStorage.getItem('access_token'));
+          setToken(tokenStore.getAccess());
         })
         .catch(() => {
-          localStorage.removeItem('refresh_token');
+          tokenStore.clearRefresh();
           setToken(null);
         })
         .finally(() => setLoading(false));
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
     };
     const onToken = () => {
-      setToken(localStorage.getItem('access_token'));
+      setToken(tokenStore.getAccess());
     };
     window.addEventListener('auth:logout', onLogout);
     window.addEventListener('auth:token', onToken);
@@ -76,62 +76,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const applySession = (authResponse: AuthResponse) => {
+  const applySession = useCallback((authResponse: AuthResponse) => {
     setUser(authResponse.user);
     setToken(authResponse.access_token);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('access_token', authResponse.access_token);
-      localStorage.setItem('refresh_token', authResponse.refresh_token);
+      tokenStore.setAccess(authResponse.access_token);
+      tokenStore.setRefresh(authResponse.refresh_token);
     }
-  };
+  }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const authResponse: AuthResponse = await authApi.login({ email, password });
-      applySession(authResponse);
-      return authResponse.user;
-    } catch (error) {
-      throw error;
-    }
-  };
+  const login = useCallback(async (email: string, password: string) => {
+    const authResponse: AuthResponse = await authApi.login({ email, password });
+    applySession(authResponse);
+    return authResponse.user;
+  }, [applySession]);
 
-  const register = async (email: string, fullName: string, password: string) => {
-    try {
-      const createdUser = await authApi.register({
-        email,
-        full_name: fullName,
-        password,
-      });
-      return createdUser;
-    } catch (error) {
-      throw error;
-    }
-  };
+  const register = useCallback(async (email: string, fullName: string, password: string) => {
+    const createdUser = await authApi.register({
+      email,
+      full_name: fullName,
+      password,
+    });
+    return createdUser;
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setToken(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      tokenStore.clearAll();
     }
     authApi.logout().catch(() => {
       // Ignore logout errors
     });
-  };
+  }, []);
 
-  const value: AuthContextType = {
-    user,
-    token,
-    setUser,
-    login,
-    register,
-    applySession,
-    logout,
-    loading,
-    isAuthenticated: !!user && !!token,
-    isAdmin: !!user?.is_admin,
-  };
+  const isAuthenticated = !!user && !!token;
+  const isAdmin = !!user?.is_admin;
+
+  const value: AuthContextType = useMemo(
+    () => ({
+      user,
+      token,
+      setUser,
+      login,
+      register,
+      applySession,
+      logout,
+      loading,
+      isAuthenticated,
+      isAdmin,
+    }),
+    [user, token, login, register, applySession, logout, loading, isAuthenticated, isAdmin]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

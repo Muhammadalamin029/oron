@@ -18,6 +18,7 @@ import {
 } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
 import { StockCell } from "./components/StockCell"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 /* ── Main Page ── */
 export default function AdminProductsPage() {
@@ -50,8 +51,8 @@ export default function AdminProductsPage() {
       try {
         setLoading(true)
         await load()
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load products")
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load products"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -65,8 +66,8 @@ export default function AdminProductsPage() {
       await productsApi.deleteProduct(id)
       toast.success("Product deleted")
       await load()
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete product")
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to delete product"))
     }
   }
 

@@ -13,6 +13,7 @@ import {
   OrangeButton,
 } from "@/components/admin-ui"
 import Image from "next/image"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 type ProductForm = {
   id: string; // random local id
@@ -51,7 +52,7 @@ export default function AddProductPage() {
             imagePreview: "",
           }])
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) toast.error("Failed to load categories")
       } finally {
         if (!cancelled) setLoading(false)
@@ -118,8 +119,8 @@ export default function AddProductPage() {
       await Promise.all(promises)
       toast.success(`${forms.length} product(s) added successfully`)
       router.push("/admin/products")
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to add products")
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to add products"))
     } finally {
       setCreating(false)
     }

@@ -13,6 +13,7 @@ import {
   OrangeButton,
 } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 /* ── Star rating renderer ── */
 function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
@@ -69,8 +70,8 @@ export default function AdminReviewsPage() {
       try {
         setLoading(true)
         await load()
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load reviews")
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load reviews"))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -93,8 +94,8 @@ export default function AdminReviewsPage() {
       await reviewsApi.setApproval(id, approve)
       toast.success(approve ? "Review approved" : "Review revoked")
       await load()
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to update review")
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to update review"))
     }
   }
 

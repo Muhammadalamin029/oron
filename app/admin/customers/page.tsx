@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 import { CustomerStatus } from "./components/CustomerStatus"
 import { CustomerAvatar } from "./components/CustomerAvatar"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const PAGE_SIZE = 15
 
@@ -33,8 +34,8 @@ export default function AdminCustomersPage() {
         const usersRes = await adminApi.getUsersWithStats()
         if (cancelled) return
         setUsers(usersRes)
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load customers")
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load customers"))
       } finally {
         if (!cancelled) setLoading(false)
       }

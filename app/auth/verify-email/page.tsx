@@ -8,6 +8,7 @@ import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { authApi } from "@/services/auth"
 import { AuthShell, AuthHeading } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 function VerifyEmailPageContent() {
   const searchParams = useSearchParams()
@@ -30,11 +31,11 @@ function VerifyEmailPageContent() {
           setStatus("success")
           setMessage(result.msg || "Email verified.")
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!cancelled) {
           setStatus("error")
-          setMessage(error?.message || "Verification failed.")
-          toast.error(error?.message || "Verification failed")
+          setMessage(getErrorMessage(error, "Verification failed."))
+          toast.error(getErrorMessage(error, "Verification failed"))
         }
       }
     })()

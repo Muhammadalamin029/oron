@@ -21,6 +21,7 @@ import { disputesApi } from "@/services/disputes"
 import { ordersApi } from "@/services/orders"
 import { useAuth } from "@/contexts/auth-context"
 import type { Dispute, Order } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const REASONS = [
   "Item not received",
@@ -66,8 +67,8 @@ export default function DisputesPage() {
       try {
         setFetching(true)
         await load()
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load disputes")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load disputes"))
       } finally {
         if (!cancelled) setFetching(false)
       }
@@ -120,8 +121,8 @@ export default function DisputesPage() {
                     toast.success("Dispute created")
                     setForm((p) => ({ ...p, description: "" }))
                     await load()
-                  } catch (error: any) {
-                    toast.error(error?.message || "Failed to create dispute")
+                  } catch (error: unknown) {
+                    toast.error(getErrorMessage(error, "Failed to create dispute"))
                   } finally {
                     setCreating(false)
                   }

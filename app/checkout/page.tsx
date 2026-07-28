@@ -20,6 +20,7 @@ import {
   Lock,
   Mail,
 } from "lucide-react"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const NIGERIAN_STATES = [
   "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
@@ -127,11 +128,11 @@ export default function CheckoutPage() {
       })
       clearCart()
       setGuestConfirmation({ email: result.email })
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 409) {
         setEmailConflict(true)
       } else {
-        toast.error(error?.message || "Checkout failed")
+        toast.error(getErrorMessage(error, "Checkout failed"))
       }
     } finally {
       setIsProcessing(false)

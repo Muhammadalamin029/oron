@@ -16,6 +16,7 @@ import {
   CustomerCell,
   EmptyState,
 } from "@/components/admin-ui";
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function PaymentLinkDetailPage() {
   const params = useParams<{ id: string }>();
@@ -41,8 +42,8 @@ export default function PaymentLinkDetailPage() {
       try {
         setLoading(true);
         await load();
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load payment link");
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load payment link"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -68,8 +69,8 @@ export default function PaymentLinkDetailPage() {
       const updated = await paymentLinksApi.update(link.id, { is_active: !link.is_active });
       setLink(updated);
       toast.success(updated.is_active ? "Link activated" : "Link deactivated");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to update link");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to update link"));
     } finally {
       setTogglingActive(false);
     }
@@ -84,8 +85,8 @@ export default function PaymentLinkDetailPage() {
       await paymentLinksApi.remove(link.id);
       toast.success("Payment link deleted");
       router.push("/admin/payment-links");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to delete link");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to delete link"));
     }
   };
 

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { disputesApi } from "@/services/disputes";
 import type { Dispute } from "@/types/api";
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const STATUSES = ["open", "under_review", "resolved", "rejected"];
 
@@ -23,8 +24,8 @@ export function DisputeModal({
       await disputesApi.updateDispute(dispute.id, { status: value });
       toast.success("Dispute updated");
       await onUpdated();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to update");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update"));
     }
   };
 
@@ -33,8 +34,8 @@ export function DisputeModal({
       await disputesApi.updateDispute(dispute.id, { resolution_note: note });
       toast.success("Note saved");
       await onUpdated();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to save note");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to save note"));
     }
   };
 

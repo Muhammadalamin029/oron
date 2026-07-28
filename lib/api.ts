@@ -1,3 +1,5 @@
+import { tokenStore } from './token-store';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 export interface ApiResponse<T = any> {
@@ -18,13 +20,13 @@ class ApiClient {
 
   private getAuthHeaders(): Record<string, string> {
     if (typeof window === 'undefined') return {};
-    const token = localStorage.getItem('access_token');
+    const token = tokenStore.getAccess();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   private async refreshAccessToken(): Promise<string | null> {
     if (typeof window === 'undefined') return null;
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = tokenStore.getRefresh();
     if (!refreshToken) return null;
 
     if (!this.refreshPromise) {
@@ -37,15 +39,14 @@ class ApiClient {
         });
 
         if (!response.ok) {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+          tokenStore.clearAll();
           window.dispatchEvent(new Event('auth:logout'));
           return null;
         }
 
         const data = await response.json();
-        if (data?.access_token) localStorage.setItem('access_token', data.access_token);
-        if (data?.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+        if (data?.access_token) tokenStore.setAccess(data.access_token);
+        if (data?.refresh_token) tokenStore.setRefresh(data.refresh_token);
         window.dispatchEvent(new Event('auth:token'));
         return data?.access_token || null;
       })().finally(() => {
@@ -95,11 +96,20 @@ class ApiClient {
       if (error instanceof ApiError) {
         throw error;
       }
-      
+
+      // A fetch that fails before ever getting an HTTP response (offline, DNS
+      // failure, CORS block) always surfaces as a generic TypeError — that's
+      // distinguishable from a real server error, so callers can tell "you're
+      // offline" apart from "the server returned a 500" instead of both
+      // collapsing into the same status-500 ApiError.
+      if (error instanceof TypeError) {
+        throw new ApiError('Network unavailable — check your connection', 0, { offline: true });
+      }
+
       if (error instanceof Error) {
         throw new ApiError(error.message, 500);
       }
-      
+
       throw new ApiError('Unknown error occurred', 500);
     }
   }

@@ -18,6 +18,7 @@ import {
   AdminTd,
   EmptyState,
 } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState<(Dispute & { user?: User; order?: Order })[]>([])
@@ -35,8 +36,8 @@ export default function AdminDisputesPage() {
       try {
         setLoading(true)
         await load()
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load disputes")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load disputes"))
       } finally {
         if (!cancelled) setLoading(false)
       }

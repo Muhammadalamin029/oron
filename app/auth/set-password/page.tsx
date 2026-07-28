@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { getPasswordError } from "@/lib/validation"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 function SetPasswordPageContent() {
   const router = useRouter()
@@ -47,8 +48,8 @@ function SetPasswordPageContent() {
       applySession(result)
       toast.success("Password set! You're now signed in.")
       router.push(result.order_id ? `/orders/${result.order_id}` : "/account")
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to set password")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to set password"))
     } finally {
       setIsLoading(false)
     }

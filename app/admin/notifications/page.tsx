@@ -7,6 +7,7 @@ import { notificationsApi } from "@/services/notifications"
 import type { Notification } from "@/types/api"
 import { AdminPageHeader, GlassCard, SkeletonRows, EmptyState } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const ICONS: Record<string, typeof Bell> = {
   order: Package,
@@ -26,19 +27,21 @@ export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchNotifications = async () => {
-    try {
-      const data = await notificationsApi.getNotifications()
-      setNotifications(data)
-    } catch (error) {
-      toast.error("Failed to load notifications")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchNotifications()
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await notificationsApi.getNotifications()
+        if (!cancelled) setNotifications(data)
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load notifications"))
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const handleMarkAsRead = async (notificationId: string) => {

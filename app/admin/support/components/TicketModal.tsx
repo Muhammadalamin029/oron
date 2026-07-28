@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supportApi } from "@/services/support";
 import type { SupportTicket } from "@/types/api";
 import { StatusBadge, OrangeButton } from "@/components/admin-ui";
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const STATUSES = ["open", "answered", "closed"];
 
@@ -28,8 +29,8 @@ export function TicketModal({
     try {
       const data = await supportApi.getTicket(ticketId);
       setTicket(data);
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to load ticket");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to load ticket"));
     }
   };
 
@@ -45,8 +46,8 @@ export function TicketModal({
       setTicket((prev) => (prev ? { ...prev, status: value } : prev));
       toast.success("Ticket updated");
       await onUpdated();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to update");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update"));
     }
   };
 
@@ -60,8 +61,8 @@ export function TicketModal({
       const fresh = await supportApi.getTicket(ticketId);
       setTicket(fresh);
       await onUpdated();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to send reply");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to send reply"));
     } finally {
       setSending(false);
     }

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { addressesApi } from "@/services/addresses"
 import { useAuth } from "@/contexts/auth-context"
 import type { Address } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export function AddressesSection() {
   const { isAuthenticated } = useAuth()
@@ -40,8 +41,8 @@ export function AddressesSection() {
       try {
         setFetching(true)
         await load()
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load addresses")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load addresses"))
       } finally {
         if (!cancelled) setFetching(false)
       }
@@ -75,8 +76,8 @@ export function AddressesSection() {
                     toast.success("Address saved")
                     setForm((p) => ({ ...p, line1: "", line2: "" }))
                     await load()
-                  } catch (error: any) {
-                    toast.error(error?.message || "Failed to save")
+                  } catch (error: unknown) {
+                    toast.error(getErrorMessage(error, "Failed to save"))
                   } finally {
                     setCreating(false)
                   }
@@ -226,8 +227,8 @@ export function AddressesSection() {
                                   await addressesApi.update(a.id, { is_default: true })
                                   toast.success("Set as default")
                                   await load()
-                                } catch (error: any) {
-                                  toast.error(error?.message || "Failed to update")
+                                } catch (error: unknown) {
+                                  toast.error(getErrorMessage(error, "Failed to update"))
                                 }
                               }}
                             >
@@ -243,8 +244,8 @@ export function AddressesSection() {
                                 await addressesApi.delete(a.id)
                                 toast.success("Address deleted")
                                 await load()
-                              } catch (error: any) {
-                                toast.error(error?.message || "Failed to delete")
+                              } catch (error: unknown) {
+                                toast.error(getErrorMessage(error, "Failed to delete"))
                               }
                             }}
                           >

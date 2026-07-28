@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { Edit, Trash2, Eye, EyeOff } from "lucide-react"
 import { categoriesApi } from "@/services/categories"
 import type { Category } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 interface CategoriesListProps {
   categories: Category[]
@@ -32,8 +33,8 @@ export function CategoriesList({ categories, loading, onEdit, onDelete, onRefres
       toast.success("Category deleted successfully")
       onDelete()
       onRefresh()
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to delete category")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to delete category"))
     } finally {
       setDeleting(null)
     }

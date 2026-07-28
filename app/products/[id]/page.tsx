@@ -19,6 +19,7 @@ import { reviewsApi } from "@/services/reviews"
 import type { Review } from "@/types/api"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function ProductDetailPage({
   params,
@@ -51,8 +52,8 @@ export default function ProductDetailPage({
           const related = await productsApi.getProducts({ category: catName, limit: 5 })
           if (!cancelled) setRelatedWatches(apiProductsToWatches(related).filter((p) => p.id !== id).slice(0, 4))
         }
-      } catch (err: any) {
-        if (!cancelled) { toast.error(err?.message || "Failed to load product"); setWatch(null) }
+      } catch (err: unknown) {
+        if (!cancelled) { toast.error(getErrorMessage(err, "Failed to load product")); setWatch(null) }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -287,7 +288,7 @@ export default function ProductDetailPage({
                       setReviewForm({ rating: "5", title: "", comment: "" })
                       const data = await reviewsApi.getProductReviews(id)
                       setReviews(data)
-                    } catch (err: any) { toast.error(err?.message || "Failed to submit review") }
+                    } catch (err: unknown) { toast.error(getErrorMessage(err, "Failed to submit review")) }
                     finally { setSubmittingReview(false) }
                   }}
                 >

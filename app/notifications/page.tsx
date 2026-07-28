@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { notificationsApi } from "@/services/notifications"
 import { useAuth } from "@/contexts/auth-context"
 import type { Notification } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function NotificationsPage() {
   const router = useRouter()
@@ -32,9 +33,9 @@ export default function NotificationsPage() {
         setFetching(true)
         const data = await notificationsApi.getNotifications()
         if (!cancelled) setNotifications(data)
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!cancelled)
-          toast.error(error?.message || "Failed to load notifications")
+          toast.error(getErrorMessage(error, "Failed to load notifications"))
       } finally {
         if (!cancelled) setFetching(false)
       }
@@ -95,8 +96,8 @@ export default function NotificationsPage() {
                         setNotifications((prev) =>
                           prev.map((x) => (x.id === n.id ? updated : x))
                         )
-                      } catch (error: any) {
-                        toast.error(error?.message || "Failed to update")
+                      } catch (error: unknown) {
+                        toast.error(getErrorMessage(error, "Failed to update"))
                       }
                     }}
                   >

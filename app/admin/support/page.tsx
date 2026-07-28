@@ -17,6 +17,7 @@ import {
   AdminTd,
   EmptyState,
 } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function AdminSupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([])
@@ -34,8 +35,8 @@ export default function AdminSupportPage() {
       try {
         setLoading(true)
         await load()
-      } catch (error: any) {
-        if (!cancelled) toast.error(error?.message || "Failed to load tickets")
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load tickets"))
       } finally {
         if (!cancelled) setLoading(false)
       }

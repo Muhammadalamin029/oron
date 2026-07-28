@@ -8,6 +8,7 @@ import { ArrowLeft, Mail } from "lucide-react"
 import { authApi } from "@/services/auth"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 function ForgotPasswordPageContent() {
   const searchParams = useSearchParams()
@@ -23,8 +24,8 @@ function ForgotPasswordPageContent() {
       await authApi.forgotPassword(email)
       setIsSubmitted(true)
       toast.success("If an account exists, we've sent a link to your email")
-    } catch (error: any) {
-      toast.error(error?.message || "Something went wrong. Please try again.")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Something went wrong. Please try again."))
     } finally {
       setIsLoading(false)
     }

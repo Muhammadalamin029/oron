@@ -16,6 +16,7 @@ import {
   getNextOrderStatus,
 } from "@/lib/admin-utils";
 import { AdminPageHeader, GlassCard, SkeletonRows, OrangeButton } from "@/components/admin-ui";
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const SHIPMENT_STATUSES = ["label_created", "in_transit", "delivered"];
 
@@ -44,8 +45,8 @@ export default function AdminOrderDetailPage() {
       try {
         setLoading(true);
         await load();
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load order");
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load order"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -69,8 +70,8 @@ export default function AdminOrderDetailPage() {
       setTracking("");
       setShipStatus("label_created");
       await load();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to create shipment");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to create shipment"));
     } finally {
       setSubmitting(false);
     }
@@ -83,8 +84,8 @@ export default function AdminOrderDetailPage() {
       setOrderStatus(value);
       toast.success("Order status updated");
       await load();
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to update status");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to update status"));
     } finally {
       setUpdatingStatus(false);
     }

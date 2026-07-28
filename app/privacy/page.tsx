@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Shield, Calendar, Eye } from "lucide-react"
 import { settingsApi } from "@/services/settings"
+import { sanitizeRichHtml } from "@/lib/sanitize-html"
 import { toast } from "sonner"
 
 export default function PrivacyPage() {
@@ -15,9 +16,11 @@ export default function PrivacyPage() {
   const [lastUpdated, setLastUpdated] = useState("")
 
   useEffect(() => {
+    let cancelled = false
     const fetchPrivacy = async () => {
       try {
         const privacy = await settingsApi.getSetting("privacy_policy")
+        if (cancelled) return
         if (privacy) {
           setPrivacyContent(privacy.value)
           setLastUpdated(privacy.updated_at ? new Date(privacy.updated_at).toLocaleDateString() : "")
@@ -25,15 +28,19 @@ export default function PrivacyPage() {
           setPrivacyContent(getDefaultPrivacyContent())
         }
       } catch (error) {
+        if (cancelled) return
         console.error("Failed to fetch privacy policy:", error)
         setPrivacyContent(getDefaultPrivacyContent())
         toast.error("Failed to load privacy policy")
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchPrivacy()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const getDefaultPrivacyContent = () => {
@@ -158,7 +165,7 @@ export default function PrivacyPage() {
             <CardContent>
               <div 
                 className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: privacyContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(privacyContent) }}
               />
             </CardContent>
           </Card>

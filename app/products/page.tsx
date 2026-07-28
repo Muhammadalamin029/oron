@@ -12,6 +12,8 @@ import { productsApi } from "@/services/products"
 import { apiProductsToWatches } from "@/lib/product-mapper"
 import type { Watch } from "@/lib/cart-context"
 import { cn } from "@/lib/utils"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const sortOptions = [
   { value: "featured", label: "Sort by: Newest" },
@@ -29,6 +31,8 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [sortOpen, setSortOpen] = useState(false)
 
+  const debouncedSearch = useDebouncedValue(searchQuery, 350)
+
   const apiSort = useMemo(() => {
     switch (sortBy) {
       case "price-low":  return { sort_by: "price", sort_order: "asc" as const }
@@ -44,8 +48,8 @@ export default function ProductsPage() {
       try {
         const cats = await categoriesApi.getCategories()
         if (!cancelled) setCategoryNames(["All", ...cats.map((c) => c.name)])
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load categories")
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load categories"))
       }
     })()
     return () => { cancelled = true }
@@ -57,19 +61,19 @@ export default function ProductsPage() {
       try {
         setLoading(true)
         const products = await productsApi.getProducts({
-          search: searchQuery || undefined,
+          search: debouncedSearch || undefined,
           category: selectedCategory !== "All" ? selectedCategory : undefined,
           ...apiSort,
         })
         if (!cancelled) setWatches(apiProductsToWatches(products))
-      } catch (err: any) {
-        if (!cancelled) toast.error(err?.message || "Failed to load products")
+      } catch (err: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(err, "Failed to load products"))
       } finally {
         if (!cancelled) setLoading(false)
       }
     })()
     return () => { cancelled = true }
-  }, [selectedCategory, searchQuery, apiSort])
+  }, [selectedCategory, debouncedSearch, apiSort])
 
   const currentSortLabel = sortOptions.find((s) => s.value === sortBy)?.label || "Sort by: Newest"
   const hasActiveFilters = selectedCategory !== "All" || searchQuery !== ""

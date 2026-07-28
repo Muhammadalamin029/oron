@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { authApi } from "@/services/auth"
 import { AuthShell } from "@/components/auth-ui"
 import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function VerificationRequiredPage() {
   const { user } = useAuth()
@@ -20,8 +21,8 @@ export default function VerificationRequiredPage() {
     try {
       await authApi.resendVerification(user.email)
       toast.success("Verification email sent! Please check your inbox.")
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to resend verification email")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to resend verification email"))
     } finally {
       setIsResending(false)
     }

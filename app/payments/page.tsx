@@ -12,25 +12,27 @@ import { toast } from "sonner"
 import { CreditCard, Calendar, CheckCircle, XCircle, Clock, ExternalLink } from "lucide-react"
 import { paymentsApi } from "@/services/payments"
 import type { Payment } from "@/types/api"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchPayments = async () => {
-    try {
-      const data = await paymentsApi.getUserPayments()
-      setPayments(data)
-    } catch (error) {
-      console.error("Failed to fetch payments:", error)
-      toast.error("Failed to load payment history")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchPayments()
+    let cancelled = false
+    ;(async () => {
+      try {
+        const data = await paymentsApi.getUserPayments()
+        if (!cancelled) setPayments(data)
+      } catch (error: unknown) {
+        if (!cancelled) toast.error(getErrorMessage(error, "Failed to load payment history"))
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const getStatusBadge = (status: string) => {

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { categoriesApi } from "@/services/categories"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 interface CategoryFormProps {
   onSuccess?: () => void
@@ -42,8 +43,8 @@ export function CategoryForm({ onSuccess, initialData }: CategoryFormProps) {
       toast.success("Category created successfully!")
       setFormData({ name: "", description: "" })
       onSuccess?.()
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Failed to create category")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to create category"))
     } finally {
       setIsSubmitting(false)
     }

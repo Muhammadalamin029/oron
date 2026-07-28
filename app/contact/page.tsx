@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { MapPin, Phone, Mail, Clock, MessageCircle, Globe } from "lucide-react"
 import { settingsApi } from "@/services/settings"
+import { sanitizeRichHtml } from "@/lib/sanitize-html"
 
 interface ContactSettings {
   company_name: string
@@ -64,6 +65,7 @@ export default function ContactPage() {
   })
 
   useEffect(() => {
+    let cancelled = false
     const fetchContactSettings = async () => {
       try {
         const settings = await Promise.all([
@@ -86,7 +88,9 @@ export default function ContactPage() {
           settingsApi.getSetting("social_linkedin"),
           settingsApi.getSetting("google_maps_embed"),
         ])
-        
+
+        if (cancelled) return
+
         setContactSettings({
           company_name: settings[0]?.value || "ORON Watch Marketplace",
           email: settings[1]?.value || "contact@oron.com",
@@ -110,11 +114,14 @@ export default function ContactPage() {
       } catch (error) {
         console.error("Failed to fetch contact settings:", error)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchContactSettings()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -338,7 +345,7 @@ export default function ContactPage() {
                 </div>
                 <div 
                   className="w-full h-64"
-                  dangerouslySetInnerHTML={{ __html: contactSettings.google_maps_embed }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(contactSettings.google_maps_embed) }}
                 />
               </div>
             )}
