@@ -100,7 +100,7 @@ export function Header() {
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <button
-                className="md:hidden text-[#c6c6c6] hover:text-[#ff6b00] transition-colors"
+                className="md:hidden text-secondary-text hover:text-primary transition-colors"
                 aria-label="Open menu"
               >
                 <Menu className="h-5 w-5" />
@@ -110,17 +110,17 @@ export function Header() {
             {/* ── Mobile Drawer ── */}
             <SheetContent
               side="left"
-              className="w-80 p-0 flex flex-col bg-[#111111] border-r border-[#353534]"
+              className="w-80 p-0 flex flex-col bg-card border-r border-border"
               aria-label="Navigation"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-between px-6 pt-8 pb-6 border-b border-[#353534]">
+              <div className="flex items-center justify-between px-6 pt-8 pb-6 border-b border-border">
                 <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
-                  <span className="font-display font-bold text-xl tracking-[0.2em] text-[#e5e2e1]">ORON</span>
-                  <span className="text-[#ff6b00] font-bold text-xl">TECHWARE</span>
+                  <span className="font-display font-bold text-xl tracking-[0.2em] text-foreground">ORON</span>
+                  <span className="text-primary font-bold text-xl">TECHWARE</span>
                 </Link>
                 <SheetClose asChild>
-                  <button className="text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
                     <X className="h-4 w-4" />
                   </button>
                 </SheetClose>
@@ -133,7 +133,7 @@ export function Header() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-[#c6c6c6] hover:text-[#ff6b00] hover:bg-white/5 transition-all group"
+                    className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-secondary-text hover:text-primary hover:bg-white/5 transition-all group"
                   >
                     {link.label}
                     <ChevronRight className="h-4 w-4 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
@@ -143,8 +143,8 @@ export function Header() {
 
               {/* Account Links */}
               {isAuthenticated && (
-                <div className="px-4 py-2 border-t border-[#353534]">
-                  <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#9a9898]">
+                <div className="px-4 py-2 border-t border-border">
+                  <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                     My Account
                   </p>
                   <div className="flex flex-col gap-1 mt-1">
@@ -153,7 +153,7 @@ export function Header() {
                         key={href}
                         href={href}
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#c6c6c6] hover:text-[#ff6b00] hover:bg-white/5 transition-all"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-text hover:text-primary hover:bg-white/5 transition-all"
                       >
                         <Icon className="h-4 w-4 flex-shrink-0" />
                         {label}
@@ -163,7 +163,7 @@ export function Header() {
                       <Link
                         href="/admin"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#c6c6c6] hover:text-[#ff6b00] hover:bg-white/5 transition-all"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-text hover:text-primary hover:bg-white/5 transition-all"
                       >
                         <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
                         Admin Dashboard
@@ -174,16 +174,16 @@ export function Header() {
               )}
 
               {/* Bottom CTA */}
-              <div className="mt-auto px-4 pb-8 pt-4 border-t border-[#353534]">
+              <div className="mt-auto px-4 pb-8 pt-4 border-t border-border">
                 {!isAuthenticated ? (
                   <Link href="/auth/login" onClick={() => setMobileOpen(false)}>
-                    <button className="w-full bg-[#ff6b00] text-white font-semibold tracking-widest text-sm py-3 rounded-lg glow-hover transition-all active:scale-95">
+                    <button className="w-full bg-primary text-white font-semibold tracking-widest text-sm py-3 rounded-lg glow-hover transition-all active:scale-95">
                       SIGN IN
                     </button>
                   </Link>
                 ) : (
                   <button
-                    className="w-full border border-[#353534] text-[#c6c6c6] hover:border-[#ff6b00] hover:text-[#ff6b00] font-semibold tracking-wide text-sm py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full border border-border text-secondary-text hover:border-primary hover:text-primary font-semibold tracking-wide text-sm py-3 rounded-lg transition-all flex items-center justify-center gap-2"
                     onClick={() => { logout(); setMobileOpen(false) }}
                   >
                     <LogOut className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-[#c6c6c6] hover:text-[#ff6b00] transition-colors duration-200"
+                className="text-sm font-medium text-secondary-text hover:text-primary transition-colors duration-200"
               >
                 {link.label}
               </Link>
@@ -216,14 +216,14 @@ export function Header() {
             aria-label="ORON Techware – Home"
           >
             <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-xl md:text-2xl tracking-[0.2em] text-[#e5e2e1] group-hover:text-white transition-colors">
+              <span className="font-display font-bold text-xl md:text-2xl tracking-[0.2em] text-foreground group-hover:text-white transition-colors">
                 ORON
               </span>
-              <span className="font-display font-bold text-xl md:text-2xl tracking-[0.15em] text-[#ff6b00]">
+              <span className="font-display font-bold text-xl md:text-2xl tracking-[0.15em] text-primary">
                 TECHWARE
               </span>
             </div>
-            <span className="hidden md:block text-[8px] tracking-[0.4em] text-[#9a9898] uppercase mt-0.5">
+            <span className="hidden md:block text-[8px] tracking-[0.4em] text-muted-foreground uppercase mt-0.5">
               Engineered for Performance
             </span>
           </Link>
@@ -237,7 +237,7 @@ export function Header() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-[#c6c6c6] hover:text-[#ff6b00] transition-colors duration-200"
+                className="text-sm font-medium text-secondary-text hover:text-primary transition-colors duration-200"
               >
                 {link.label}
               </Link>
@@ -247,7 +247,7 @@ export function Header() {
           {/* Icon actions */}
           <div className="flex items-center gap-3">
             <button
-              className="hidden md:flex text-[#c6c6c6] hover:text-[#ff6b00] transition-colors duration-200 active:scale-95"
+              className="hidden md:flex text-secondary-text hover:text-primary transition-colors duration-200 active:scale-95"
               aria-label="Search"
             >
               <Search className="h-[18px] w-[18px]" />
@@ -255,7 +255,7 @@ export function Header() {
 
             <Link
               href={isAuthenticated ? "/account" : "/auth/login"}
-              className="hidden md:flex text-[#c6c6c6] hover:text-[#ff6b00] transition-colors duration-200 active:scale-95"
+              className="hidden md:flex text-secondary-text hover:text-primary transition-colors duration-200 active:scale-95"
               aria-label="Account"
             >
               <User className="h-[18px] w-[18px]" />
@@ -264,22 +264,22 @@ export function Header() {
             {isAuthenticated && (
               <Link
                 href="/notifications"
-                className="hidden md:flex relative text-[#c6c6c6] hover:text-[#ff6b00] transition-colors duration-200 active:scale-95"
+                className="hidden md:flex relative text-secondary-text hover:text-primary transition-colors duration-200 active:scale-95"
                 aria-label="Notifications"
               >
                 <Bell className="h-[18px] w-[18px]" />
                 {mounted && unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[#ff6b00] text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-white text-[9px] flex items-center justify-center font-bold leading-none">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </Link>
             )}
 
-            <Link href="/cart" className="relative text-[#ff6b00] hover:text-[#ff8533] transition-colors duration-200 active:scale-95" aria-label="Cart">
+            <Link href="/cart" className="relative text-primary hover:text-[#ff8533] transition-colors duration-200 active:scale-95" aria-label="Cart">
               <ShoppingCart className="h-[18px] w-[18px]" />
               {mounted && totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[#ff6b00] text-white text-[9px] flex items-center justify-center font-bold leading-none">
+                <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-white text-[9px] flex items-center justify-center font-bold leading-none">
                   {totalItems > 9 ? "9+" : totalItems}
                 </span>
               )}
@@ -290,7 +290,7 @@ export function Header() {
 
       {/* Orange gradient accent line */}
       <div className={cn(
-        "h-px w-full bg-gradient-to-r from-transparent via-[#ff6b00]/40 to-transparent transition-opacity duration-300",
+        "h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent transition-opacity duration-300",
         scrolled ? "opacity-0" : "opacity-100"
       )} />
     </header>

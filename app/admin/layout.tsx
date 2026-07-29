@@ -43,8 +43,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-[#0e0e0e] flex items-center justify-center">
-        <div className="text-[#ff6b00] font-mono text-sm tracking-[0.2em] animate-pulse">
+      <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center">
+        <div className="text-primary font-mono text-sm tracking-[0.2em] animate-pulse">
           INITIALIZING...
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-[#131313] text-[#e5e2e1] overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Atmospheric grid background */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
@@ -69,37 +69,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Top header bar */}
-      <header className="fixed top-0 right-0 md:left-[240px] left-0 h-16 bg-[#131313]/70 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-40">
+      <header className="fixed top-0 right-0 md:left-[240px] left-0 h-16 bg-background/70 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-40">
         {/* Mobile: hamburger */}
         <div className="flex items-center gap-4">
           <Sheet>
             <SheetTrigger asChild>
-              <button className="md:hidden text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
+              <button className="md:hidden text-muted-foreground hover:text-foreground transition-colors">
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-[240px] bg-[#0e0e0e] border-r border-white/5">
+            <SheetContent side="left" className="p-0 w-[240px] bg-surface-container-lowest border-r border-white/5">
               <AdminSidebar />
             </SheetContent>
           </Sheet>
 
           {/* Breadcrumb */}
-          <span className="font-mono text-sm font-semibold text-[#9a9898] tracking-widest hidden sm:block">
+          <span className="font-mono text-sm font-semibold text-muted-foreground tracking-widest hidden sm:block">
             {crumb}
           </span>
         </div>
 
         {/* Right actions */}
         <div className="flex items-center gap-5">
-          <button className="text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
+          <button className="text-muted-foreground hover:text-foreground transition-colors">
             <Terminal className="h-5 w-5" />
           </button>
-          <button className="relative text-[#9a9898] hover:text-[#e5e2e1] transition-colors">
+          <button className="relative text-muted-foreground hover:text-foreground transition-colors">
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#ff6b00] rounded-full" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />
           </button>
-          <div className="w-8 h-8 rounded-full bg-[#ff6b00]/10 border border-[#ff6b00]/30 flex items-center justify-center">
-            <span className="text-[#ff6b00] text-xs font-bold">{initials}</span>
+          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+            <span className="text-primary text-xs font-bold">{initials}</span>
           </div>
         </div>
       </header>
@@ -111,7 +111,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Watermark */}
       <div className="fixed bottom-4 right-4 z-0 pointer-events-none opacity-20">
-        <span className="font-mono text-xs text-[#c6c6c6] tracking-[0.2em]">
+        <span className="font-mono text-xs text-secondary-text tracking-[0.2em]">
           
         </span>
       </div>

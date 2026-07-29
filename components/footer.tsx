@@ -45,7 +45,7 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-[#0e0e0e] border-t border-white/5">
+    <footer className="bg-surface-container-lowest border-t border-white/5">
       {/* Newsletter strip */}
       <div className="border-b border-white/5">
         <div className="max-w-[1280px] mx-auto px-6 py-14 relative overflow-hidden">
@@ -55,7 +55,7 @@ export function Footer() {
               <h3 className="font-display font-bold text-2xl md:text-3xl text-white mb-2">
                 STAY IN THE LOOP
               </h3>
-              <p className="text-[#9a9898] text-sm max-w-sm">
+              <p className="text-muted-foreground text-sm max-w-sm">
                 Get early access to drops, archive sales, and technical blueprints before anyone else.
               </p>
             </div>
@@ -66,11 +66,11 @@ export function Footer() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="ENTER YOUR EMAIL"
                 required
-                className="flex-1 md:w-72 bg-[#131313] border border-[#353534] text-[#e5e2e1] placeholder:text-[#9a9898] text-xs font-semibold tracking-widest px-5 py-3.5 rounded-lg focus:outline-none focus:border-[#ff6b00] transition-colors"
+                className="flex-1 md:w-72 bg-background border border-border text-foreground placeholder:text-muted-foreground text-xs font-semibold tracking-widest px-5 py-3.5 rounded-lg focus:outline-none focus:border-primary transition-colors"
               />
               <button
                 type="submit"
-                className="bg-[#ff6b00] text-white text-xs font-bold tracking-widest px-6 py-3.5 rounded-lg glow-hover transition-all active:scale-95 hover:bg-[#ff8533] flex items-center gap-2 whitespace-nowrap"
+                className="bg-primary text-white text-xs font-bold tracking-widest px-6 py-3.5 rounded-lg glow-hover transition-all active:scale-95 hover:bg-[#ff8533] flex items-center gap-2 whitespace-nowrap"
               >
                 SIGN UP <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -86,13 +86,13 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="font-display font-bold text-xl tracking-[0.2em] text-white">ORON</span>
-              <span className="font-display font-bold text-xl tracking-[0.15em] text-[#ff6b00]">TECHWARE</span>
+              <span className="font-display font-bold text-xl tracking-[0.15em] text-primary">TECHWARE</span>
             </div>
-            <p className="text-[9px] tracking-[0.35em] text-[#9a9898] uppercase">
+            <p className="text-[9px] tracking-[0.35em] text-muted-foreground uppercase">
               Engineered for Performance
             </p>
           </div>
-          <p className="text-sm text-[#9a9898] leading-relaxed max-w-xs">
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
             Premium tech accessories built for people who demand more — from the streets of Lagos to wherever the world takes you.
           </p>
           <div className="flex gap-4">
@@ -101,7 +101,7 @@ export function Footer() {
                 key={label}
                 href={href}
                 aria-label={label}
-                className="w-9 h-9 rounded-full border border-[#353534] flex items-center justify-center text-[#9a9898] hover:border-[#ff6b00] hover:text-[#ff6b00] transition-all"
+                className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-all"
               >
                 <Icon className="h-4 w-4" />
               </a>
@@ -117,7 +117,7 @@ export function Footer() {
           <ul className="space-y-3.5">
             {shopLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href={href} className="text-sm text-[#9a9898] hover:text-[#ff6b00] transition-colors">
+                <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   {label}
                 </Link>
               </li>
@@ -133,7 +133,7 @@ export function Footer() {
           <ul className="space-y-3.5">
             {companyLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href={href} className="text-sm text-[#9a9898] hover:text-[#ff6b00] transition-colors">
+                <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   {label}
                 </Link>
               </li>
@@ -149,7 +149,7 @@ export function Footer() {
           <ul className="space-y-3.5">
             {careLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href={href} className="text-sm text-[#9a9898] hover:text-[#ff6b00] transition-colors">
+                <Link href={href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   {label}
                 </Link>
               </li>
@@ -160,10 +160,10 @@ export function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/5">
-        <div className="max-w-[1280px] mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-[#9a9898] text-[11px] tracking-widest">
+        <div className="max-w-[1280px] mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-muted-foreground text-[11px] tracking-widest">
           <div className="flex items-center gap-6">
-            <Link href="/privacy" className="hover:text-[#ff6b00] transition-colors">PRIVACY POLICY</Link>
-            <Link href="/terms" className="hover:text-[#ff6b00] transition-colors">TERMS OF SERVICE</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">PRIVACY POLICY</Link>
+            <Link href="/terms" className="hover:text-primary transition-colors">TERMS OF SERVICE</Link>
           </div>
           <p>© {new Date().getFullYear()} ORON TECHWARE · NIGERIA 🇳🇬</p>
         </div>

@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import { Bell, CheckCircle, Clock, Package, CreditCard, AlertTriangle, Headphones } from "lucide-react"
 import { notificationsApi } from "@/services/notifications"
 import type { Notification } from "@/types/api"
-import { AdminPageHeader, GlassCard, SkeletonRows, EmptyState } from "@/components/admin-ui"
+import { AdminPageHeader, GlassCard, SkeletonRows, EmptyState, StatTile } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/get-error-message"
 
@@ -84,7 +84,7 @@ export default function AdminNotificationsPage() {
           unreadCount > 0 ? (
             <button
               onClick={handleMarkAllAsRead}
-              className="border border-[#353534] text-[#9a9898] hover:text-white hover:border-[#ff6b00] transition-colors px-6 py-3 rounded-full text-[10px] font-bold tracking-widest uppercase"
+              className="border border-border text-muted-foreground hover:text-white hover:border-primary transition-colors px-6 py-3 rounded-full text-[10px] font-bold tracking-widest uppercase"
             >
               Mark All Read
             </button>
@@ -94,19 +94,7 @@ export default function AdminNotificationsPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <GlassCard key={stat.label} className="p-5">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase mb-2">
-              {stat.label}
-            </p>
-            <p
-              className={cn(
-                "font-display font-extrabold text-3xl",
-                stat.accent ? "text-[#ff6b00]" : "text-white"
-              )}
-            >
-              {stat.value}
-            </p>
-          </GlassCard>
+          <StatTile key={stat.label} label={stat.label} value={stat.value} highlight={stat.accent} />
         ))}
       </div>
 
@@ -131,7 +119,7 @@ export default function AdminNotificationsPage() {
                   <div
                     className={cn(
                       "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0",
-                      ICON_COLORS[n.type] || "bg-[#2a2a2a] text-[#9a9898]"
+                      ICON_COLORS[n.type] || "bg-secondary text-muted-foreground"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -139,15 +127,15 @@ export default function AdminNotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-white text-sm">{n.title}</p>
-                      {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-[#ff6b00]" />}
+                      {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                     </div>
-                    <p className="text-sm text-[#9a9898] mb-2">{n.message}</p>
-                    <div className="flex items-center gap-3 text-[11px] text-[#9a9898]">
+                    <p className="text-sm text-muted-foreground mb-2">{n.message}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {new Date(n.created_at).toLocaleDateString()}
                       </span>
-                      <span className="px-2 py-0.5 rounded border border-[#353534] uppercase tracking-widest text-[9px] font-bold">
+                      <span className="px-2 py-0.5 rounded border border-border uppercase tracking-widest text-[9px] font-bold">
                         {n.type}
                       </span>
                     </div>
@@ -155,7 +143,7 @@ export default function AdminNotificationsPage() {
                   {!n.is_read && (
                     <button
                       onClick={() => handleMarkAsRead(n.id)}
-                      className="text-[#9a9898] hover:text-[#ff6b00] transition-colors flex-shrink-0"
+                      className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
                       aria-label="Mark as read"
                     >
                       <CheckCircle className="h-4 w-4" />

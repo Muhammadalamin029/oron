@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, PackageSearch } from "lucide-react";
 import { adminApi } from "@/services/admin";
 import type { Order, User } from "@/types/api";
 import { formatNGN, formatDate } from "@/lib/admin-utils";
@@ -16,6 +16,9 @@ import {
   OrangeButton,
   CustomerCell,
   EmptyState,
+  AdminTable,
+  AdminTr,
+  AdminTd,
 } from "@/components/admin-ui";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/get-error-message"
@@ -98,8 +101,8 @@ export default function AdminOrdersPage() {
                 className={cn(
                   "px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all",
                   activeStatus === s
-                    ? "bg-[#ff6b00] text-white"
-                    : "bg-[#0a0a0a] border border-[#1a1a1a] text-[#9a9898] hover:border-[#ff6b00] hover:text-[#ff6b00]",
+                    ? "bg-primary text-white"
+                    : "bg-[#0a0a0a] border border-[#1a1a1a] text-muted-foreground hover:border-primary hover:text-primary",
                 )}
               >
                 {s}
@@ -114,6 +117,7 @@ export default function AdminOrdersPage() {
             <SkeletonRows count={6} />
           ) : filtered.length === 0 ? (
             <EmptyState
+              icon={<PackageSearch className="h-8 w-8" />}
               title="No orders found"
               message="Try adjusting your search or status filter."
               action={
@@ -128,80 +132,53 @@ export default function AdminOrdersPage() {
               }
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5 bg-[#0a0a0a]/50">
-                    {[
-                      "TXN ID",
-                      "Date",
-                      "Customer",
-                      "Items",
-                      "NGN Total",
-                      "Status",
-                      "Action",
-                    ].map((h, i) => (
-                      <th
-                        key={h}
-                        className={cn(
-                          "p-4 text-[10px] font-bold tracking-[0.15em] text-[#9a9898] uppercase font-normal",
-                          i === 6 && "text-center",
-                        )}
+            <AdminTable
+              headers={["TXN ID", "Date", "Customer", "Items", "NGN Total", "Status", { label: "Action", align: "center" }]}
+              lastRight={false}
+            >
+              {filtered.map((order) => {
+                const u = order.user;
+                const itemCount =
+                  order.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
+                return (
+                  <AdminTr
+                    key={order.id}
+                    onClick={() => router.push(`/admin/orders/${order.id}`)}
+                  >
+                    <AdminTd mono className="text-xs truncate max-w-[110px]">
+                      #{order.id.slice(0, 10).toUpperCase()}
+                    </AdminTd>
+                    <AdminTd className="whitespace-nowrap">
+                      {formatDate(order.created_at)}
+                    </AdminTd>
+                    <AdminTd>
+                      <CustomerCell
+                        name={u?.full_name || "Customer"}
+                        email={u?.email || order.user_id}
+                      />
+                    </AdminTd>
+                    <AdminTd>{itemCount}</AdminTd>
+                    <AdminTd className="font-display font-bold text-lg text-white">
+                      {formatNGN(order.total_amount)}
+                    </AdminTd>
+                    <AdminTd>
+                      <StatusBadge status={order.status} />
+                    </AdminTd>
+                    <AdminTd className="text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/admin/orders/${order.id}`);
+                        }}
+                        className="text-muted-foreground group-hover:text-primary transition-colors"
                       >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/[0.04]">
-                  {filtered.map((order) => {
-                    const u = order.user;
-                    const itemCount =
-                      order.items?.reduce((s, i) => s + i.quantity, 0) ?? 0;
-                    return (
-                      <tr
-                        key={order.id}
-                        onClick={() => router.push(`/admin/orders/${order.id}`)}
-                        className="border-l-2 border-transparent hover:border-[#ff6b00] hover:bg-white/[0.02] transition-all cursor-pointer group"
-                      >
-                        <td className="p-4 font-mono text-[#9a9898] text-xs truncate max-w-[110px]">
-                          #{order.id.slice(0, 10).toUpperCase()}
-                        </td>
-                        <td className="p-4 text-[#c6c6c6] text-sm whitespace-nowrap">
-                          {formatDate(order.created_at)}
-                        </td>
-                        <td className="p-4">
-                          <CustomerCell
-                            name={u?.full_name || "Customer"}
-                            email={u?.email || order.user_id}
-                          />
-                        </td>
-                        <td className="p-4 text-[#c6c6c6] text-sm">
-                          {itemCount}
-                        </td>
-                        <td className="p-4 font-display font-bold text-lg text-white">
-                          {formatNGN(order.total_amount)}
-                        </td>
-                        <td className="p-4">
-                          <StatusBadge status={order.status} />
-                        </td>
-                        <td className="p-4 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/admin/orders/${order.id}`);
-                            }}
-                            className="text-[#9a9898] group-hover:text-[#ff6b00] transition-colors"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </AdminTd>
+                  </AdminTr>
+                );
+              })}
+            </AdminTable>
           )}
       </GlassCard>
     </div>

@@ -15,6 +15,10 @@ import {
   DarkInput,
   OrangeButton,
   EmptyState,
+  AdminTable,
+  AdminTr,
+  AdminTd,
+  StatusBadge,
 } from "@/components/admin-ui";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/get-error-message"
@@ -99,8 +103,8 @@ export default function AdminPaymentLinksPage() {
               className={cn(
                 "px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all",
                 activeStatus === s
-                  ? "bg-[#ff6b00] text-white"
-                  : "bg-[#0a0a0a] border border-[#1a1a1a] text-[#9a9898] hover:border-[#ff6b00] hover:text-[#ff6b00]",
+                  ? "bg-primary text-white"
+                  : "bg-[#0a0a0a] border border-[#1a1a1a] text-muted-foreground hover:border-primary hover:text-primary",
               )}
             >
               {s}
@@ -128,89 +132,48 @@ export default function AdminPaymentLinksPage() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 bg-[#0a0a0a]/50">
-                  {["Title", "Link", "Products", "Status", "Created", "Action"].map(
-                    (h, i) => (
-                      <th
-                        key={h}
-                        className={cn(
-                          "p-4 text-[10px] font-bold tracking-[0.15em] text-[#9a9898] uppercase font-normal",
-                          i === 5 && "text-center",
-                        )}
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {filtered.map((link) => (
-                  <tr
-                    key={link.id}
-                    onClick={() => router.push(`/admin/payment-links/${link.id}`)}
-                    className="border-l-2 border-transparent hover:border-[#ff6b00] hover:bg-white/[0.02] transition-all cursor-pointer group"
+          <AdminTable headers={["Title", "Link", "Products", "Status", "Created", "Action"]}>
+            {filtered.map((link) => (
+              <AdminTr
+                key={link.id}
+                onClick={() => router.push(`/admin/payment-links/${link.id}`)}
+              >
+                <AdminTd className="text-foreground font-semibold">
+                  {link.title}
+                </AdminTd>
+                <AdminTd>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-muted-foreground text-xs truncate max-w-[140px]">
+                      /pay/{link.slug}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyLink(link.slug);
+                      }}
+                      className="text-muted-foreground group-hover:text-primary transition-colors"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </AdminTd>
+                <AdminTd>{link.items?.length ?? 0}</AdminTd>
+                <AdminTd>
+                  <StatusBadge status={link.is_active ? "active" : "inactive"} />
+                </AdminTd>
+                <AdminTd className="whitespace-nowrap">{formatDate(link.created_at)}</AdminTd>
+                <AdminTd className="text-right">
+                  <Link
+                    href={`/admin/payment-links/${link.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-muted-foreground group-hover:text-primary transition-colors text-xs font-bold tracking-wider uppercase"
                   >
-                    <td className="p-4 text-[#e5e2e1] text-sm font-semibold">
-                      {link.title}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[#9a9898] text-xs truncate max-w-[140px]">
-                          /pay/{link.slug}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyLink(link.slug);
-                          }}
-                          className="text-[#9a9898] group-hover:text-[#ff6b00] transition-colors"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="p-4 text-[#c6c6c6] text-sm">
-                      {link.items?.length ?? 0}
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[10px] font-bold tracking-[0.15em] uppercase",
-                          link.is_active
-                            ? "border-green-900 bg-green-900/20 text-green-400"
-                            : "border-[#353534] bg-[#1c1b1b] text-[#9a9898]",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                            link.is_active ? "bg-green-400" : "bg-[#9a9898]",
-                          )}
-                        />
-                        {link.is_active ? "ACTIVE" : "INACTIVE"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-[#c6c6c6] text-sm whitespace-nowrap">
-                      {formatDate(link.created_at)}
-                    </td>
-                    <td className="p-4 text-center">
-                      <Link
-                        href={`/admin/payment-links/${link.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-[#9a9898] group-hover:text-[#ff6b00] transition-colors text-xs font-bold tracking-wider uppercase"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    View
+                  </Link>
+                </AdminTd>
+              </AdminTr>
+            ))}
+          </AdminTable>
         )}
       </GlassCard>
     </div>

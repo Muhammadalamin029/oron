@@ -40,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${sora.variable} ${inter.variable} font-sans antialiased bg-[#131313] text-[#e5e2e1]`}>
+      <body className={`${sora.variable} ${inter.variable} font-sans antialiased`}>
         <AuthProvider>
           <CartProvider>
             {children}

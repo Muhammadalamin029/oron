@@ -50,25 +50,25 @@ export function AdminSidebar() {
     .toUpperCase()
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-[240px] bg-[#0e0e0e] border-r border-white/5 flex flex-col z-50">
+    <aside className="fixed left-0 top-0 h-full w-[240px] bg-surface-container-lowest border-r border-white/5 flex flex-col z-50">
       {/* Brand Header */}
       <div className="p-6 flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-lg bg-[#ff6b00]/10 border border-[#ff6b00]/30 flex items-center justify-center flex-shrink-0">
-          <span className="font-bold text-[#ff6b00] text-sm font-mono">{initials}</span>
+        <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center flex-shrink-0">
+          <span className="font-bold text-primary text-sm font-mono">{initials}</span>
         </div>
         <div>
           <h1 className="font-display font-bold text-lg leading-none tracking-tighter">
-            <span className="text-[#e5e2e1]">ORON</span>
-            <span className="text-[#ff6b00]"> / ADMIN</span>
+            <span className="text-foreground">ORON</span>
+            <span className="text-primary"> / ADMIN</span>
           </h1>
-          <p className="text-[9px] font-bold tracking-[0.25em] text-[#9a9898] uppercase mt-1">
+          <p className="text-[9px] font-bold tracking-[0.25em] text-muted-foreground uppercase mt-1">
             ADMINISTRATOR
           </p>
         </div>
       </div>
 
       {/* Orange rule */}
-      <div className="h-px bg-gradient-to-r from-[#ff6b00]/60 via-[#ff6b00]/20 to-transparent mx-6 mb-4" />
+      <div className="h-px bg-gradient-to-r from-primary/60 via-primary/20 to-transparent mx-6 mb-4" />
 
       {/* Nav */}
       <nav className="flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto">
@@ -84,14 +84,14 @@ export function AdminSidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-150 group",
                 isActive
-                  ? "bg-[#ff6b00] text-white"
-                  : "text-[#9a9898] hover:text-[#e5e2e1] hover:bg-white/[0.04]"
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
               )}
             >
               <Icon
                 className={cn(
                   "h-4 w-4 flex-shrink-0 transition-colors",
-                  isActive ? "text-white" : "text-[#9a9898] group-hover:text-[#e5e2e1]"
+                  isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               {label}
@@ -104,14 +104,14 @@ export function AdminSidebar() {
       <div className="p-3 border-t border-white/5 space-y-0.5">
         <Link
           href="/"
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-[#9a9898] hover:text-[#e5e2e1] hover:bg-white/[0.04] transition-all"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-white/[0.04] transition-all"
         >
           <ExternalLink className="h-4 w-4 flex-shrink-0" />
           Exit to Store ↗
         </Link>
         <button
           onClick={() => { logout(); router.push("/auth/login") }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-[#9a9898] hover:text-red-400 hover:bg-red-500/[0.06] transition-all"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-muted-foreground hover:text-red-400 hover:bg-red-500/[0.06] transition-all"
         >
           <LogOut className="h-4 w-4 flex-shrink-0" />
           Terminate Session
