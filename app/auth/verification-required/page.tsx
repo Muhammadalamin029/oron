@@ -7,7 +7,7 @@ import { Mail, AlertCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { authApi } from "@/services/auth"
 import { AuthShell } from "@/components/auth-ui"
-import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { SiteCard, PrimaryButton } from "@/components/site-ui"
 import { getErrorMessage } from "@/lib/get-error-message"
 
 export default function VerificationRequiredPage() {
@@ -40,7 +40,7 @@ export default function VerificationRequiredPage() {
         </p>
       </div>
 
-      <GlassCard className="p-6 sm:p-8">
+      <SiteCard className="p-6 sm:p-8">
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4 mb-6">
           <div className="flex items-center gap-3">
             <Mail className="h-5 w-5 text-[#9a9898] flex-shrink-0" />
@@ -64,18 +64,18 @@ export default function VerificationRequiredPage() {
           )}
         </div>
 
-        <OrangeButton
+        <PrimaryButton
           onClick={handleResendVerification}
           disabled={isResending}
           className="w-full"
         >
           {isResending ? "SENDING..." : "RESEND VERIFICATION EMAIL"}
-        </OrangeButton>
+        </PrimaryButton>
 
         <p className="text-xs text-[#9a9898] text-center mt-4">
           Didn&apos;t receive the email? Check your spam folder or request a new one above.
         </p>
-      </GlassCard>
+      </SiteCard>
 
       <div className="mt-8 text-center">
         <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">

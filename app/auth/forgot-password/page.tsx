@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { ArrowLeft, Mail } from "lucide-react"
 import { authApi } from "@/services/auth"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
-import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { SiteCard, PrimaryButton } from "@/components/site-ui"
 import { getErrorMessage } from "@/lib/get-error-message"
 
 function ForgotPasswordPageContent() {
@@ -44,7 +44,7 @@ function ForgotPasswordPageContent() {
             <span className="font-medium text-white">{email}</span>
           </p>
           <Link href="/auth/login">
-            <OrangeButton className="w-full">BACK TO SIGN IN</OrangeButton>
+            <PrimaryButton className="w-full">BACK TO SIGN IN</PrimaryButton>
           </Link>
           <p className="text-sm text-[#9a9898] mt-6">
             Didn&apos;t receive the email?{" "}
@@ -69,7 +69,7 @@ function ForgotPasswordPageContent() {
 
       <AuthHeading title="Forgot password?" sub="No worries, we'll send you reset instructions." />
 
-      <GlassCard className="p-6 sm:p-8">
+      <SiteCard className="p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <AuthLabel htmlFor="email">Email</AuthLabel>
@@ -83,11 +83,11 @@ function ForgotPasswordPageContent() {
             />
           </div>
 
-          <OrangeButton type="submit" disabled={isLoading} className="w-full">
+          <PrimaryButton type="submit" disabled={isLoading} className="w-full">
             {isLoading ? "SENDING..." : "RESET PASSWORD"}
-          </OrangeButton>
+          </PrimaryButton>
         </form>
-      </GlassCard>
+      </SiteCard>
 
       <div className="mt-8 text-center">
         <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">

@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { authApi } from "@/services/auth"
 import { AuthShell, AuthHeading } from "@/components/auth-ui"
-import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { SiteCard, PrimaryButton } from "@/components/site-ui"
 import { getErrorMessage } from "@/lib/get-error-message"
 
 function VerifyEmailPageContent() {
@@ -57,7 +57,7 @@ function VerifyEmailPageContent() {
         }
       />
 
-      <GlassCard className="p-6 sm:p-8 text-center">
+      <SiteCard className="p-6 sm:p-8 text-center">
         <div className="w-16 h-16 rounded-full bg-[#ff6b00]/10 border border-[#ff6b00]/30 flex items-center justify-center mx-auto mb-6">
           {status === "loading" && <Loader2 className="h-8 w-8 text-[#ff6b00] animate-spin" />}
           {status === "success" && <CheckCircle2 className="h-8 w-8 text-[#ff6b00]" />}
@@ -69,10 +69,10 @@ function VerifyEmailPageContent() {
 
         {status !== "loading" && (
           <Link href="/auth/login">
-            <OrangeButton className="w-full">GO TO LOGIN</OrangeButton>
+            <PrimaryButton className="w-full">GO TO LOGIN</PrimaryButton>
           </Link>
         )}
-      </GlassCard>
+      </SiteCard>
 
       <div className="mt-8 text-center">
         <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">

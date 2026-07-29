@@ -8,7 +8,7 @@ import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { ApiError } from "@/lib/api"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
-import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { SiteCard, PrimaryButton } from "@/components/site-ui"
 import { getErrorMessage } from "@/lib/get-error-message"
 
 function LoginPageContent() {
@@ -55,7 +55,7 @@ function LoginPageContent() {
     <AuthShell tagline="Timeless Masterpiece. Discover our collection of premium luxury watches crafted with precision and elegance.">
       <AuthHeading title="Welcome back" sub="Sign in to your account to continue" />
 
-      <GlassCard className="p-6 sm:p-8">
+      <SiteCard className="p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <AuthLabel htmlFor="email">Email</AuthLabel>
@@ -114,11 +114,11 @@ function LoginPageContent() {
             Remember me for 30 days
           </label>
 
-          <OrangeButton type="submit" disabled={isLoading} className="w-full">
+          <PrimaryButton type="submit" disabled={isLoading} className="w-full">
             {isLoading ? "SIGNING IN..." : "SIGN IN"}
-          </OrangeButton>
+          </PrimaryButton>
         </form>
-      </GlassCard>
+      </SiteCard>
 
       <div className="mt-6 text-center">
         <p className="text-sm text-[#9a9898]">

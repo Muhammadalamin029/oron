@@ -9,7 +9,7 @@ import { authApi } from "@/services/auth"
 import { useAuth } from "@/contexts/auth-context"
 import { getPasswordError } from "@/lib/validation"
 import { AuthShell, AuthHeading, AuthLabel, AuthInput } from "@/components/auth-ui"
-import { GlassCard, OrangeButton } from "@/components/admin-ui"
+import { SiteCard, PrimaryButton } from "@/components/site-ui"
 import { getErrorMessage } from "@/lib/get-error-message"
 
 function SetPasswordPageContent() {
@@ -59,7 +59,7 @@ function SetPasswordPageContent() {
     <AuthShell tagline="Set a password to access your account, orders, and more.">
       <AuthHeading title="Set your password" sub="This verifies your email and unlocks your account." />
 
-      <GlassCard className="p-6 sm:p-8">
+      <SiteCard className="p-6 sm:p-8">
         {!token ? (
           <p className="text-center text-[#9a9898]">
             This link is missing its verification token. Please use the link from your email.
@@ -100,12 +100,12 @@ function SetPasswordPageContent() {
               />
             </div>
 
-            <OrangeButton type="submit" disabled={isLoading} className="w-full">
+            <PrimaryButton type="submit" disabled={isLoading} className="w-full">
               {isLoading ? "SETTING PASSWORD..." : "SET PASSWORD & CONTINUE"}
-            </OrangeButton>
+            </PrimaryButton>
           </form>
         )}
-      </GlassCard>
+      </SiteCard>
 
       <div className="mt-8 text-center">
         <Link href="/" className="text-sm text-[#9a9898] hover:text-white transition-colors">

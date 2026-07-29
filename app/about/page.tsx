@@ -2,6 +2,7 @@ import Image from "next/image"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Shield, Award, Heart, Globe } from "lucide-react"
+import { IconCircle } from "@/components/site-ui"
 
 const values = [
   {
@@ -63,9 +64,9 @@ export default function AboutPage() {
           >
             <div className="absolute inset-0 bg-foreground/60" />
           </div>
-          <div className="relative container mx-auto px-4 h-full flex items-center justify-center">
+          <div className="relative max-w-[1280px] mx-auto px-6 h-full flex items-center justify-center">
             <div className="text-center text-background">
-              <h1 className="text-4xl md:text-5xl font-serif mb-4">Our Story</h1>
+              <h1 className="font-display font-bold text-4xl md:text-5xl mb-4">Our Story</h1>
               <p className="text-lg max-w-2xl mx-auto opacity-90">
                 Bringing timeless elegance to Nigeria since 2020
               </p>
@@ -74,10 +75,10 @@ export default function AboutPage() {
         </section>
 
         <section className="py-16">
-          <div className="container mx-auto px-4">
+          <div className="max-w-[1280px] mx-auto px-6">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-3xl font-serif text-foreground mb-6">
+                <h2 className="font-display font-bold text-3xl text-foreground mb-6">
                   The ORON Journey
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -115,15 +116,15 @@ export default function AboutPage() {
         </section>
 
         <section className="py-16 bg-muted">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-serif text-center text-foreground mb-12">
+          <div className="max-w-[1280px] mx-auto px-6">
+            <h2 className="font-display font-bold text-3xl text-center text-foreground mb-12">
               Our Values
             </h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {values.map((value, index) => (
                 <div key={index} className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                    <value.icon className="h-8 w-8 text-primary" />
+                  <div className="mx-auto mb-4 w-fit">
+                    <IconCircle icon={<value.icon className="h-8 w-8" />} size="md" tone="primary" />
                   </div>
                   <h3 className="font-semibold text-foreground mb-2">
                     {value.title}
@@ -138,8 +139,8 @@ export default function AboutPage() {
         </section>
 
         <section className="py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-serif text-center text-foreground mb-12">
+          <div className="max-w-[1280px] mx-auto px-6">
+            <h2 className="font-display font-bold text-3xl text-center text-foreground mb-12">
               Meet Our Team
             </h2>
             <div className="grid sm:grid-cols-3 gap-8 max-w-3xl mx-auto">

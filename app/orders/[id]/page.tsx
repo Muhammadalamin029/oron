@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Header } from "@/components/header"
@@ -10,11 +9,10 @@ import { useAuth } from "@/contexts/auth-context"
 import { ordersApi } from "@/services/orders"
 import { paymentsApi } from "@/services/payments"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Copy, Clock, AlertTriangle } from "lucide-react"
 import type { Order, PaymentStatusResponse } from "@/types/api"
 import { getErrorMessage } from "@/lib/get-error-message"
+import { SiteCard, IconCircle, StatusBadge, PrimaryButton, SecondaryButton } from "@/components/site-ui"
 
 const POLL_INTERVAL_MS = 5000
 
@@ -173,8 +171,8 @@ export default function OrderDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-16">
-          <div className="h-40 rounded-md bg-muted/30 animate-pulse max-w-2xl mx-auto" />
+        <main className="max-w-2xl mx-auto px-6 pt-32 pb-24">
+          <div className="h-40 rounded-lg bg-muted/30 animate-pulse" />
         </main>
         <Footer />
       </div>
@@ -188,33 +186,27 @@ export default function OrderDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-16 max-w-2xl">
+      <main className="max-w-2xl mx-auto px-6 pt-32 pb-24">
         <div className="text-center mb-8">
           <p className="text-sm text-muted-foreground mb-2">Order</p>
-          <h1 className="text-2xl font-serif text-foreground">{order.id}</h1>
-          <div className="mt-3">
-            <Badge variant={isPaid ? "default" : "secondary"}>{order.status}</Badge>
+          <h1 className="font-display font-bold text-2xl text-foreground">{order.id}</h1>
+          <div className="mt-3 flex justify-center">
+            <StatusBadge status={order.status} />
           </div>
         </div>
 
         {isPaid ? (
-          <Card className="mb-8">
-            <CardContent className="pt-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-              <p className="text-lg font-medium text-foreground mb-1">Payment received</p>
-              <p className="text-sm text-muted-foreground">
-                We're preparing your order. You'll get an email as its status changes.
-              </p>
-            </CardContent>
-          </Card>
+          <SiteCard className="p-6 mb-8 text-center">
+            <IconCircle icon={<CheckCircle className="h-8 w-8" />} size="md" tone="success" />
+            <p className="text-lg font-medium text-foreground mt-4 mb-1">Payment received</p>
+            <p className="text-sm text-muted-foreground">
+              We're preparing your order. You'll get an email as its status changes.
+            </p>
+          </SiteCard>
         ) : (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Complete your payment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <SiteCard className="p-6 mb-8">
+            <h2 className="font-display font-bold text-lg text-foreground mb-4">Complete your payment</h2>
+            <div className="space-y-4">
               {initiating && !payment ? (
                 <p className="text-muted-foreground text-sm">Generating your account number...</p>
               ) : isExpired ? (
@@ -224,9 +216,9 @@ export default function OrderDetailPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     No charge was made. Generate a new account number to try again.
                   </p>
-                  <Button onClick={initiateCharge} disabled={initiating}>
-                    {initiating ? "Generating..." : "Generate New Account Number"}
-                  </Button>
+                  <PrimaryButton onClick={initiateCharge} disabled={initiating}>
+                    {initiating ? "GENERATING..." : "GENERATE NEW ACCOUNT NUMBER"}
+                  </PrimaryButton>
                 </div>
               ) : payment?.account_number ? (
                 <>
@@ -270,22 +262,20 @@ export default function OrderDetailPage() {
                       <p className="text-xs text-muted-foreground">
                         Waiting for your transfer — this page updates automatically once received.
                       </p>
-                      <Button variant="outline" size="sm" onClick={verifyPayment} disabled={verifying}>
+                      <SecondaryButton className="px-4 py-2 text-xs" onClick={verifyPayment} disabled={verifying}>
                         {verifying ? "Checking..." : "I have sent the money"}
-                      </Button>
+                      </SecondaryButton>
                     </div>
                   )}
                 </>
               ) : null}
-            </CardContent>
-          </Card>
+            </div>
+          </SiteCard>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Items</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <SiteCard className="p-6">
+          <h2 className="font-display font-bold text-base text-foreground mb-4">Items</h2>
+          <div className="space-y-3">
             {order.items?.map((item) => (
               <div key={item.id} className="flex items-center justify-between text-sm">
                 <span className="text-foreground">
@@ -305,20 +295,16 @@ export default function OrderDetailPage() {
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SiteCard>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          <Link href="/orders" className="flex-1">
-            <Button variant="outline" className="w-full">
-              View All Orders
-            </Button>
-          </Link>
-          <Link href="/products" className="flex-1">
-            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-              Continue Shopping
-            </Button>
-          </Link>
+          <SecondaryButton href="/orders" className="flex-1">
+            View All Orders
+          </SecondaryButton>
+          <PrimaryButton href="/products" className="flex-1">
+            Continue Shopping
+          </PrimaryButton>
         </div>
       </main>
       <Footer />

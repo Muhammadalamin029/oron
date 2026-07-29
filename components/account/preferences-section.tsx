@@ -1,14 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Bell, Globe, CreditCard } from "lucide-react"
 import { getErrorMessage } from "@/lib/get-error-message"
+import { SiteCard, SiteFieldLabel, PrimaryButton } from "@/components/site-ui"
 
 export function PreferencesSection() {
   const [isLoading, setIsLoading] = useState(false)
@@ -42,20 +40,20 @@ export function PreferencesSection() {
   return (
     <div className="space-y-6">
       {/* Notification Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
+      <SiteCard className="p-6">
+        <div className="mb-6">
+          <h2 className="font-display font-bold text-xl text-white flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
             Notification Preferences
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Choose how you want to receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Email Notifications</Label>
+              <SiteFieldLabel>Email Notifications</SiteFieldLabel>
               <p className="text-sm text-muted-foreground">
                 Receive important updates via email
               </p>
@@ -68,7 +66,7 @@ export function PreferencesSection() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Order Updates</Label>
+              <SiteFieldLabel>Order Updates</SiteFieldLabel>
               <p className="text-sm text-muted-foreground">
                 Get notified about your order status
               </p>
@@ -81,7 +79,7 @@ export function PreferencesSection() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Promotional Emails</Label>
+              <SiteFieldLabel>Promotional Emails</SiteFieldLabel>
               <p className="text-sm text-muted-foreground">
                 Receive special offers and promotions
               </p>
@@ -94,7 +92,7 @@ export function PreferencesSection() {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Newsletter</Label>
+              <SiteFieldLabel>Newsletter</SiteFieldLabel>
               <p className="text-sm text-muted-foreground">
                 Subscribe to our monthly newsletter
               </p>
@@ -104,24 +102,24 @@ export function PreferencesSection() {
               onCheckedChange={(checked) => updatePreference('newsletter', checked)}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SiteCard>
 
       {/* Regional Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+      <SiteCard className="p-6">
+        <div className="mb-6">
+          <h2 className="font-display font-bold text-xl text-white flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
             Regional Preferences
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Set your language and currency preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Language</Label>
+              <SiteFieldLabel>Language</SiteFieldLabel>
               <Select value={preferences.language} onValueChange={(value) => updatePreference('language', value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -135,7 +133,7 @@ export function PreferencesSection() {
             </div>
 
             <div className="space-y-2">
-              <Label>Currency</Label>
+              <SiteFieldLabel>Currency</SiteFieldLabel>
               <Select value={preferences.currency} onValueChange={(value) => updatePreference('currency', value)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -148,23 +146,23 @@ export function PreferencesSection() {
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SiteCard>
 
       {/* Payment Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
+      <SiteCard className="p-6">
+        <div className="mb-6">
+          <h2 className="font-display font-bold text-xl text-white flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
             Payment Preferences
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Set your default payment method
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Default Payment Method</Label>
+            <SiteFieldLabel>Default Payment Method</SiteFieldLabel>
             <Select value={preferences.payment_method_default} onValueChange={(value) => updatePreference('payment_method_default', value)}>
               <SelectTrigger>
                 <SelectValue />
@@ -179,12 +177,12 @@ export function PreferencesSection() {
               This will be selected by default during checkout
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SiteCard>
 
-      <Button onClick={handleSave} disabled={isLoading} className="w-full">
-        {isLoading ? "Saving..." : "Save Preferences"}
-      </Button>
+      <PrimaryButton onClick={handleSave} disabled={isLoading} className="w-full">
+        {isLoading ? "SAVING..." : "SAVE PREFERENCES"}
+      </PrimaryButton>
     </div>
   )
 }

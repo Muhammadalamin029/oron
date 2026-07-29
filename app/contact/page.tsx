@@ -3,15 +3,11 @@
 import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { MapPin, Phone, Mail, Clock, MessageCircle, Globe } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, Globe } from "lucide-react"
 import { settingsApi } from "@/services/settings"
 import { sanitizeRichHtml } from "@/lib/sanitize-html"
+import { SiteCard, SiteInput, SiteTextarea, SiteFieldLabel, PrimaryButton, IconCircle } from "@/components/site-ui"
 
 interface ContactSettings {
   company_name: string
@@ -136,9 +132,9 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-12">
+      <main className="max-w-[1280px] mx-auto px-6 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-serif text-foreground mb-4">Contact Us</h1>
+          <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground mb-4">Contact Us</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Have questions about our watches or need assistance with an order?
             We&apos;re here to help. Reach out to us and we&apos;ll respond as
@@ -148,15 +144,15 @@ export default function ContactPage() {
 
         <div className="grid lg:grid-cols-2 gap-12">
           <div>
-            <div className="bg-card rounded-lg border border-border p-8">
+            <SiteCard className="p-8">
               <h2 className="text-xl font-semibold text-card-foreground mb-6">
                 Send us a message
               </h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
+                    <SiteFieldLabel htmlFor="name">Name</SiteFieldLabel>
+                    <SiteInput
                       id="name"
                       placeholder="Your name"
                       value={formData.name}
@@ -167,8 +163,8 @@ export default function ContactPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
+                    <SiteFieldLabel htmlFor="email">Email</SiteFieldLabel>
+                    <SiteInput
                       id="email"
                       type="email"
                       placeholder="your@email.com"
@@ -181,8 +177,8 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Input
+                  <SiteFieldLabel htmlFor="subject">Subject</SiteFieldLabel>
+                  <SiteInput
                     id="subject"
                     placeholder="How can we help?"
                     value={formData.subject}
@@ -193,8 +189,8 @@ export default function ContactPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
+                  <SiteFieldLabel htmlFor="message">Message</SiteFieldLabel>
+                  <SiteTextarea
                     id="message"
                     placeholder="Tell us more..."
                     rows={5}
@@ -205,28 +201,22 @@ export default function ContactPage() {
                     required
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Sending..." : "Send Message"}
-                </Button>
+                <PrimaryButton type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? "SENDING..." : "SEND MESSAGE"}
+                </PrimaryButton>
               </form>
-            </div>
+            </SiteCard>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-card rounded-lg border border-border p-8">
+            <SiteCard className="p-8">
               <h2 className="text-xl font-semibold text-card-foreground mb-6">
                 Get in touch
               </h2>
               <div className="space-y-6">
                 {(contactSettings.address || contactSettings.city || contactSettings.state) && (
                   <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <MapPin className="h-5 w-5 text-primary" />
-                    </div>
+                    <IconCircle icon={<MapPin className="h-5 w-5" />} size="sm" tone="primary" />
                     <div>
                       <h3 className="font-medium text-card-foreground">Address</h3>
                       <div className="text-sm text-muted-foreground">
@@ -243,9 +233,7 @@ export default function ContactPage() {
                 
                 {contactSettings.phone && (
                   <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Phone className="h-5 w-5 text-primary" />
-                    </div>
+                    <IconCircle icon={<Phone className="h-5 w-5" />} size="sm" tone="primary" />
                     <div>
                       <h3 className="font-medium text-card-foreground">Phone</h3>
                       <div className="text-sm text-muted-foreground">
@@ -258,9 +246,7 @@ export default function ContactPage() {
                 
                 {(contactSettings.email || contactSettings.support_email) && (
                   <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Mail className="h-5 w-5 text-primary" />
-                    </div>
+                    <IconCircle icon={<Mail className="h-5 w-5" />} size="sm" tone="primary" />
                     <div>
                       <h3 className="font-medium text-card-foreground">Email</h3>
                       <div className="text-sm text-muted-foreground">
@@ -274,9 +260,7 @@ export default function ContactPage() {
                 
                 {contactSettings.business_hours && (
                   <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Clock className="h-5 w-5 text-primary" />
-                    </div>
+                    <IconCircle icon={<Clock className="h-5 w-5" />} size="sm" tone="primary" />
                     <div>
                       <h3 className="font-medium text-card-foreground">Business Hours</h3>
                       <p className="text-sm text-muted-foreground">{contactSettings.business_hours}</p>
@@ -284,10 +268,10 @@ export default function ContactPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </SiteCard>
 
             {(contactSettings.social_facebook || contactSettings.social_twitter || contactSettings.social_instagram || contactSettings.social_linkedin) && (
-              <div className="bg-card rounded-lg border border-border p-8">
+              <SiteCard className="p-8">
                 <h2 className="text-xl font-semibold text-card-foreground mb-6">
                   Connect with us
                 </h2>
@@ -333,24 +317,24 @@ export default function ContactPage() {
                     </a>
                   )}
                 </div>
-              </div>
+              </SiteCard>
             )}
 
             {contactSettings.google_maps_embed && (
-              <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <SiteCard className="overflow-hidden">
                 <div className="p-8">
                   <h2 className="text-xl font-semibold text-card-foreground mb-4">
                     Find us on the map
                   </h2>
                 </div>
-                <div 
+                <div
                   className="w-full h-64"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(contactSettings.google_maps_embed) }}
                 />
-              </div>
+              </SiteCard>
             )}
 
-            <div className="bg-card rounded-lg border border-border p-8">
+            <SiteCard className="p-8">
               <h2 className="text-xl font-semibold text-card-foreground mb-4">
                 Frequently Asked Questions
               </h2>
@@ -383,7 +367,7 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </SiteCard>
           </div>
         </div>
       </main>
