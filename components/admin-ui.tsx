@@ -291,6 +291,37 @@ export function DarkInput({
 }
 
 /* ─────────────────────────────────────────────
+   DarkTextarea — styled multi-line text input
+───────────────────────────────────────────── */
+export function DarkTextarea({
+  placeholder,
+  value,
+  onChange,
+  rows = 4,
+  className,
+}: {
+  placeholder?: string
+  value: string
+  onChange: (v: string) => void
+  rows?: number
+  className?: string
+}) {
+  return (
+    <textarea
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={rows}
+      className={cn(
+        "w-full bg-[#0a0a0a] border border-[#1a1a1a] text-foreground placeholder:text-border",
+        "px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-primary transition-all resize-none",
+        className
+      )}
+    />
+  )
+}
+
+/* ─────────────────────────────────────────────
    DarkSelect — styled select dropdown
 ───────────────────────────────────────────── */
 export function DarkSelect({

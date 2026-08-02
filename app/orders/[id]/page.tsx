@@ -171,7 +171,7 @@ export default function OrderDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="max-w-2xl mx-auto px-6 pt-32 pb-24">
+        <main className="max-w-2xl mx-auto px-6 pt-28 pb-24">
           <div className="h-40 rounded-lg bg-muted/30 animate-pulse" />
         </main>
         <Footer />
@@ -186,7 +186,7 @@ export default function OrderDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="max-w-2xl mx-auto px-6 pt-32 pb-24">
+      <main className="max-w-2xl mx-auto px-6 pt-28 pb-24">
         <div className="text-center mb-8">
           <p className="text-sm text-muted-foreground mb-2">Order</p>
           <h1 className="font-display font-bold text-2xl text-foreground">{order.id}</h1>

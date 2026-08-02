@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { MapPin, Phone, Mail, Clock, Globe } from "lucide-react"
 import { settingsApi } from "@/services/settings"
 import { sanitizeRichHtml } from "@/lib/sanitize-html"
-import { SiteCard, SiteInput, SiteTextarea, SiteFieldLabel, PrimaryButton, IconCircle } from "@/components/site-ui"
+import { SiteMain, SiteCard, SiteInput, SiteTextarea, SiteFieldLabel, PrimaryButton, IconCircle } from "@/components/site-ui"
 
 interface ContactSettings {
   company_name: string
@@ -132,7 +132,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="max-w-[1280px] mx-auto px-6 py-12">
+      <SiteMain>
         <div className="text-center mb-12">
           <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground mb-4">Contact Us</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -370,7 +370,7 @@ export default function ContactPage() {
             </SiteCard>
           </div>
         </div>
-      </main>
+      </SiteMain>
       <Footer />
     </div>
   )

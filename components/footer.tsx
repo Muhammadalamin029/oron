@@ -4,6 +4,8 @@ import Link from "next/link"
 import { Instagram, Twitter, Facebook, Mail, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { newsletterApi } from "@/services/newsletter"
+import { getErrorMessage } from "@/lib/get-error-message"
 
 const shopLinks = [
   { label: "Smartphones", href: "/products" },
@@ -35,12 +37,20 @@ const socials = [
 
 export function Footer() {
   const [email, setEmail] = useState("")
+  const [subscribing, setSubscribing] = useState(false)
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (email) {
-      toast.success("You're on the list!", { description: "Expect exclusive drops in your inbox." })
+    if (!email || subscribing) return
+    try {
+      setSubscribing(true)
+      const result = await newsletterApi.subscribe(email)
+      toast.success(result.detail || "You're on the list!", { description: "Expect exclusive drops in your inbox." })
       setEmail("")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to subscribe. Please try again."))
+    } finally {
+      setSubscribing(false)
     }
   }
 
@@ -70,9 +80,10 @@ export function Footer() {
               />
               <button
                 type="submit"
-                className="bg-primary text-white text-xs font-bold tracking-widest px-6 py-3.5 rounded-lg glow-hover transition-all active:scale-95 hover:bg-[#ff8533] flex items-center gap-2 whitespace-nowrap"
+                disabled={subscribing}
+                className="bg-primary text-white text-xs font-bold tracking-widest px-6 py-3.5 rounded-lg glow-hover transition-all active:scale-95 hover:bg-[#ff8533] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
               >
-                SIGN UP <ArrowRight className="h-3.5 w-3.5" />
+                {subscribing ? "SIGNING UP..." : "SIGN UP"} <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </form>
           </div>
