@@ -34,9 +34,9 @@ const navItems = [
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/disputes", label: "Disputes", icon: Scale },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
+  { href: "/admin/broadcast", label: "Broadcast", icon: Megaphone },
   { href: "/admin/support", label: "Support", icon: Headphones },
   { href: "/admin/settings", label: "Settings", icon: Settings },
-  { href: "/admin/broadcast", label: "Broadcast", icon: Megaphone },
 ];
 
 export function AdminSidebar() {

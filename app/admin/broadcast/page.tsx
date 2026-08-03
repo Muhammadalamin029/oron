@@ -1,108 +1,133 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  CheckCircle2,
-  Clock3,
-  Mail,
-  Megaphone,
-  Plus,
-  Send,
-  Users,
-} from "lucide-react";
+import { Mail, Megaphone, Plus, Send, Users } from "lucide-react";
 
-import { AdminPageHeader, GlassCard } from "@/components/admin-ui";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  AdminPageHeader,
+  GlassCard,
+  SectionHeader,
+  SkeletonRows,
+  EmptyState,
+  StatTile,
+  OrangeButton,
+  DarkInput,
+  DarkTextarea,
+  AdminModal,
+  AdminTable,
+  AdminTr,
+  AdminTd,
+} from "@/components/admin-ui";
 import { Switch } from "@/components/ui/switch";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { formatDateTime } from "@/lib/status-utils";
+import { newsletterApi } from "@/services/newsletter";
 import {
   notificationsApi,
   type BroadcastMessage,
-  type BroadcastPayload,
 } from "@/services/notifications";
 
 const emptyForm = {
-  title: "",
-  subject: "",
+  title: "System Update",
+  subject: "Announcement",
   message: "",
-  include_customers: true,
-  custom_recipients: "",
-  is_html: false,
-  unsubscribe_url: "",
+  includeCustomers: false,
+  includeNewsletter: false,
+  customRecipients: "",
+  unsubscribeUrl: "",
+  isHtml: false,
 };
 
 export default function AdminBroadcastPage() {
   const [broadcasts, setBroadcasts] = useState<BroadcastMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+
   const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [form, setForm] = useState(emptyForm);
 
   const loadBroadcasts = async () => {
-    try {
-      setLoading(true);
-      const data = await notificationsApi.getBroadcasts();
-      setBroadcasts(data);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Failed to load broadcasts"));
-    } finally {
-      setLoading(false);
-    }
+    const data = await notificationsApi.getBroadcasts();
+    setBroadcasts(data);
   };
 
   useEffect(() => {
-    void loadBroadcasts();
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        await loadBroadcasts();
+        const subscribers = await newsletterApi.list();
+        if (!cancelled) setSubscriberCount(subscribers.length);
+      } catch (error: unknown) {
+        if (!cancelled)
+          toast.error(getErrorMessage(error, "Failed to load broadcast history"));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  const closeModal = () => {
+    if (sendingRef.current) return;
+    setOpen(false);
+  };
+
   const handleSubmit = async () => {
+    // Synchronous guard first — closes the race window a state-only check
+    // leaves open between a fast double-click and the re-render that
+    // disables the button (this is what caused broadcasts to send twice).
+    if (sendingRef.current) return;
+
     if (!form.title.trim() || !form.subject.trim() || !form.message.trim()) {
       toast.error("Title, subject, and message are required.");
       return;
     }
 
-    const recipients = form.custom_recipients
+    const customRecipients = form.customRecipients
       .split(/[\n,]+/)
       .map((value) => value.trim())
       .filter(Boolean);
 
-    if (recipients.length === 0 && !form.include_customers) {
-      toast.error("Add at least one email or include customers.");
+    if (!form.includeCustomers && !form.includeNewsletter && customRecipients.length === 0) {
+      toast.error("Select at least one recipient group or add custom recipients.");
       return;
     }
 
-    setSubmitting(true);
+    sendingRef.current = true;
+    setSending(true);
 
     try {
-      const payload: BroadcastPayload = {
+      const result = await notificationsApi.sendBroadcast({
         title: form.title.trim(),
         subject: form.subject.trim(),
         message: form.message.trim(),
-        include_customers: form.include_customers,
-        custom_recipients: recipients,
-        is_html: form.is_html,
-        unsubscribe_url: form.unsubscribe_url.trim() || undefined,
-      };
-
-      await notificationsApi.sendBroadcast(payload);
-      toast.success("Broadcast sent successfully.");
+        include_customers: form.includeCustomers,
+        include_newsletter: form.includeNewsletter,
+        custom_recipients: customRecipients,
+        is_html: form.isHtml,
+        unsubscribe_url: form.unsubscribeUrl.trim() || undefined,
+      });
+      toast.success(`Broadcast sent to ${result.recipient_count} recipient${result.recipient_count === 1 ? "" : "s"}`);
       setForm(emptyForm);
       setOpen(false);
       await loadBroadcasts();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to send broadcast"));
     } finally {
-      setSubmitting(false);
+      sendingRef.current = false;
+      setSending(false);
     }
   };
+
+  const totalRecipients = broadcasts.reduce((sum, item) => sum + item.recipient_count, 0);
+  const customerSends = broadcasts.filter((item) => item.include_customers).length;
 
   return (
     <div className="space-y-6">
@@ -110,297 +135,181 @@ export default function AdminBroadcastPage() {
         title="BROADCAST"
         sub="/ CUSTOMER MESSAGES"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <button className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary px-5 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:opacity-90">
-                <Plus className="h-4 w-4" />
-                New broadcast
-              </button>
-            </DialogTrigger>
-
-            <DialogContent className="sm:max-w-2xl bg-[#111111] border border-white/10 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-display">
-                  Create broadcast
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Send a message to selected customers or your full customer
-                  list.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-2">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      Title
-                    </label>
-                    <input
-                      value={form.title}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          title: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white outline-none ring-0 placeholder:text-muted-foreground focus:border-primary"
-                      placeholder="Flash sale this week"
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      Subject line
-                    </label>
-                    <input
-                      value={form.subject}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          subject: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white outline-none placeholder:text-muted-foreground focus:border-primary"
-                      placeholder="Your ORON update is here"
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      Message
-                    </label>
-                    <textarea
-                      rows={7}
-                      value={form.message}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          message: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-white outline-none placeholder:text-muted-foreground focus:border-primary"
-                      placeholder="Write the announcement here..."
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                      Custom recipients
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={form.custom_recipients}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          custom_recipients: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm text-white outline-none placeholder:text-muted-foreground focus:border-primary"
-                      placeholder="customer@example.com, another@example.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Include all customers
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Send to every non-admin customer in the database.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={form.include_customers}
-                      onCheckedChange={(checked) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          include_customers: checked,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                    Unsubscribe link (optional)
-                  </label>
-                  <input
-                    value={form.unsubscribe_url}
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        unsubscribe_url: event.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white outline-none placeholder:text-muted-foreground focus:border-primary"
-                    placeholder="https://your-site.com/unsubscribe"
-                  />
-                </div>
-
-                <label className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={form.is_html}
-                    onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        is_html: event.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 rounded border-white/20 bg-black/20 text-primary"
-                  />
-                  Send as HTML content
-                </label>
-              </div>
-
-              <DialogFooter className="pt-4">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="rounded-full border border-white/10 px-4 py-2 text-sm text-muted-foreground transition hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Send className="h-4 w-4" />
-                  {submitting ? "Sending..." : "Send broadcast"}
-                </button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <OrangeButton pill onClick={() => setOpen(true)}>
+            <span className="flex items-center gap-2">
+              <Plus className="h-4 w-4" /> NEW BROADCAST
+            </span>
+          </OrangeButton>
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                Total sends
-              </p>
-              <p className="mt-2 text-3xl font-display text-white">
-                {broadcasts.length}
-              </p>
-            </div>
-            <div className="rounded-full bg-primary/15 p-3 text-primary">
-              <Megaphone className="h-5 w-5" />
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                Customers included
-              </p>
-              <p className="mt-2 text-3xl font-display text-white">
-                {broadcasts.filter((item) => item.include_customers).length}
-              </p>
-            </div>
-            <div className="rounded-full bg-emerald-500/15 p-3 text-emerald-400">
-              <Users className="h-5 w-5" />
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                Recipients reached
-              </p>
-              <p className="mt-2 text-3xl font-display text-white">
-                {broadcasts.reduce(
-                  (sum, item) => sum + item.recipient_count,
-                  0,
-                )}
-              </p>
-            </div>
-            <div className="rounded-full bg-blue-500/15 p-3 text-blue-400">
-              <Mail className="h-5 w-5" />
-            </div>
-          </div>
-        </GlassCard>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatTile label="Total Sends" value={broadcasts.length} icon={Megaphone} />
+        <StatTile label="Customers Included" value={customerSends} icon={Users} />
+        <StatTile label="Recipients Reached" value={totalRecipients} icon={Mail} />
       </div>
 
       <GlassCard className="overflow-hidden">
-        <div className="border-b border-white/5 p-5">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/15 p-2 text-primary">
-              <CheckCircle2 className="h-4 w-4" />
+        <SectionHeader title="RECENT BROADCASTS" sub="MESSAGE HISTORY" />
+        {loading ? (
+          <SkeletonRows count={4} height="h-14" />
+        ) : broadcasts.length === 0 ? (
+          <EmptyState
+            icon={<Megaphone className="h-8 w-8" />}
+            title="No broadcasts sent yet"
+            message="Send your first message to customers and newsletter subscribers."
+            action={
+              <OrangeButton onClick={() => setOpen(true)}>NEW BROADCAST</OrangeButton>
+            }
+          />
+        ) : (
+          <AdminTable headers={["Subject", "Recipients", "Sent To", "Date"]}>
+            {broadcasts.map((b) => (
+              <AdminTr key={b.id}>
+                <AdminTd className="font-medium text-white">
+                  {b.subject}
+                  <p className="text-xs text-muted-foreground mt-0.5 font-normal">{b.title}</p>
+                </AdminTd>
+                <AdminTd mono>{b.recipient_count}</AdminTd>
+                <AdminTd>
+                  <div className="flex flex-wrap gap-1.5">
+                    {b.include_customers && (
+                      <span className="px-2 py-0.5 rounded border border-border text-[9px] font-bold uppercase tracking-widest">
+                        Customers
+                      </span>
+                    )}
+                    {b.include_newsletter && (
+                      <span className="px-2 py-0.5 rounded border border-border text-[9px] font-bold uppercase tracking-widest">
+                        Newsletter
+                      </span>
+                    )}
+                  </div>
+                </AdminTd>
+                <AdminTd className="whitespace-nowrap">{formatDateTime(b.created_at)}</AdminTd>
+              </AdminTr>
+            ))}
+          </AdminTable>
+        )}
+      </GlassCard>
+
+      <AdminModal open={open} onClose={closeModal} title="SEND BROADCAST" maxWidth="sm:max-w-2xl">
+        <div className="p-6 space-y-5 overflow-y-auto">
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+              Title
+            </label>
+            <DarkInput
+              value={form.title}
+              onChange={(v) => setForm((p) => ({ ...p, title: v }))}
+              placeholder="System Update"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+              Subject
+            </label>
+            <DarkInput
+              value={form.subject}
+              onChange={(v) => setForm((p) => ({ ...p, subject: v }))}
+              placeholder="Announcement"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+              Message
+            </label>
+            <DarkTextarea
+              value={form.message}
+              onChange={(v) => setForm((p) => ({ ...p, message: v }))}
+              placeholder="Write the announcement here..."
+              rows={5}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+              Recipients
+            </label>
+            <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Registered customers</p>
+                <p className="text-xs text-muted-foreground mt-0.5">All non-admin accounts</p>
+              </div>
+              <Switch
+                checked={form.includeCustomers}
+                onCheckedChange={(v) => setForm((p) => ({ ...p, includeCustomers: v }))}
+              />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">
-                Recent broadcasts
-              </h3>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Message history
-              </p>
+            <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Newsletter subscribers</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {subscriberCount === null ? "Loading…" : `${subscriberCount} subscriber${subscriberCount === 1 ? "" : "s"}`}
+                </p>
+              </div>
+              <Switch
+                checked={form.includeNewsletter}
+                onCheckedChange={(v) => setForm((p) => ({ ...p, includeNewsletter: v }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+                Custom recipients (optional)
+              </label>
+              <DarkTextarea
+                value={form.customRecipients}
+                onChange={(v) => setForm((p) => ({ ...p, customRecipients: v }))}
+                placeholder="customer@example.com, another@example.com"
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-[#1a1a1a]">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+                Unsubscribe URL (optional)
+              </label>
+              <DarkInput
+                value={form.unsubscribeUrl}
+                onChange={(v) => setForm((p) => ({ ...p, unsubscribeUrl: v }))}
+                placeholder="https://your-site.com/unsubscribe"
+              />
+            </div>
+            <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Send as HTML</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Message is treated as raw HTML instead of plain text
+                </p>
+              </div>
+              <Switch
+                checked={form.isHtml}
+                onCheckedChange={(v) => setForm((p) => ({ ...p, isHtml: v }))}
+              />
             </div>
           </div>
         </div>
 
-        {loading ? (
-          <div className="p-6 text-sm text-muted-foreground">
-            Loading broadcasts...
-          </div>
-        ) : broadcasts.length === 0 ? (
-          <div className="p-10 text-center text-muted-foreground">
-            No broadcasts yet. Send your first message to customers.
-          </div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {broadcasts.map((item) => (
-              <div key={item.id} className="p-5">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-                      {item.subject}
-                    </p>
-                    <h4 className="mt-1 text-xl font-semibold text-white">
-                      {item.title}
-                    </h4>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock3 className="h-3.5 w-3.5" />
-                    {new Date(item.created_at).toLocaleString()}
-                  </div>
-                </div>
-
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-secondary-text">
-                  {item.message}
-                </p>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {item.recipient_count} recipients
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-                    {item.include_customers
-                      ? "Includes all customers"
-                      : "Custom recipients only"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-                    By {item.sent_by_admin}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </GlassCard>
+        <div className="p-6 border-t border-[#1a1a1a] flex justify-end gap-4 bg-[#0a0a0a]/50 shrink-0">
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={sending}
+            className="px-6 py-2 rounded-full border border-[#1a1a1a] text-muted-foreground text-[10px] font-bold tracking-widest uppercase hover:bg-[#1a1a1a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            CANCEL
+          </button>
+          <OrangeButton onClick={handleSubmit} disabled={sending} pill className="px-8">
+            <span className="flex items-center gap-2">
+              <Send className="h-3.5 w-3.5" />
+              {sending ? "SENDING..." : "SEND"}
+            </span>
+          </OrangeButton>
+        </div>
+      </AdminModal>
     </div>
   );
 }

@@ -10,30 +10,17 @@ import {
   CreditCard,
   AlertTriangle,
   Headphones,
-  Send,
-  Radio,
   ShoppingBag,
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { notificationsApi, type BroadcastMessage } from "@/services/notifications";
-import { newsletterApi } from "@/services/newsletter";
+import { notificationsApi } from "@/services/notifications";
 import type { Notification } from "@/types/api";
 import {
   AdminPageHeader,
   GlassCard,
-  SectionHeader,
   SkeletonRows,
   EmptyState,
   StatTile,
-  OrangeButton,
-  DarkInput,
-  DarkTextarea,
-  AdminModal,
-  AdminTable,
-  AdminTr,
-  AdminTd,
 } from "@/components/admin-ui";
-import { formatDateTime } from "@/lib/status-utils";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/get-error-message";
 
@@ -57,18 +44,6 @@ export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [broadcasts, setBroadcasts] = useState<BroadcastMessage[]>([]);
-  const [broadcastsLoading, setBroadcastsLoading] = useState(true);
-  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
-
-  const [broadcastOpen, setBroadcastOpen] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [broadcastTitle, setBroadcastTitle] = useState("System Update");
-  const [broadcastSubject, setBroadcastSubject] = useState("Announcement");
-  const [broadcastMessage, setBroadcastMessage] = useState("");
-  const [includeCustomers, setIncludeCustomers] = useState(false);
-  const [includeNewsletter, setIncludeNewsletter] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -80,31 +55,6 @@ export default function AdminNotificationsPage() {
           toast.error(getErrorMessage(error, "Failed to load notifications"));
       } finally {
         if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const loadBroadcasts = async () => {
-    const data = await notificationsApi.getBroadcasts();
-    setBroadcasts(data);
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setBroadcastsLoading(true);
-        await loadBroadcasts();
-        const subscribers = await newsletterApi.list();
-        if (!cancelled) setSubscriberCount(subscribers.length);
-      } catch (error: unknown) {
-        if (!cancelled)
-          toast.error(getErrorMessage(error, "Failed to load broadcast history"));
-      } finally {
-        if (!cancelled) setBroadcastsLoading(false);
       }
     })();
     return () => {
@@ -136,49 +86,6 @@ export default function AdminNotificationsPage() {
     }
   };
 
-  const closeBroadcastModal = () => {
-    if (sending) return;
-    setBroadcastOpen(false);
-  };
-
-  const handleBroadcast = async () => {
-    const title = broadcastTitle.trim() || "System Update";
-    const subject = broadcastSubject.trim() || "Announcement";
-
-    if (!broadcastMessage.trim()) {
-      toast.error("Please enter a message before sending the broadcast.");
-      return;
-    }
-
-    if (!includeCustomers && !includeNewsletter) {
-      toast.error("Select at least one recipient group.");
-      return;
-    }
-
-    try {
-      setSending(true);
-      const result = await notificationsApi.sendBroadcast({
-        title,
-        subject,
-        message: broadcastMessage.trim(),
-        include_customers: includeCustomers,
-        include_newsletter: includeNewsletter,
-      });
-      toast.success(`Broadcast sent to ${result.recipient_count} recipient${result.recipient_count === 1 ? "" : "s"}`);
-      setBroadcastTitle("System Update");
-      setBroadcastSubject("Announcement");
-      setBroadcastMessage("");
-      setIncludeCustomers(false);
-      setIncludeNewsletter(false);
-      setBroadcastOpen(false);
-      await loadBroadcasts();
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to send broadcast"));
-    } finally {
-      setSending(false);
-    }
-  };
-
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const stats = [
@@ -200,21 +107,14 @@ export default function AdminNotificationsPage() {
         title="NOTIFICATIONS"
         sub="/ SYSTEM ALERTS"
         action={
-          <div className="flex items-center gap-3">
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="border border-border text-muted-foreground hover:text-white hover:border-primary transition-colors px-6 py-3 rounded-full text-[10px] font-bold tracking-widest uppercase"
-              >
-                Mark All Read
-              </button>
-            )}
-            <OrangeButton pill onClick={() => setBroadcastOpen(true)}>
-              <span className="flex items-center gap-2">
-                <Radio className="h-4 w-4" /> SEND BROADCAST
-              </span>
-            </OrangeButton>
-          </div>
+          unreadCount > 0 ? (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="border border-border text-muted-foreground hover:text-white hover:border-primary transition-colors px-6 py-3 rounded-full text-[10px] font-bold tracking-widest uppercase"
+            >
+              Mark All Read
+            </button>
+          ) : undefined
         }
       />
 
@@ -296,129 +196,6 @@ export default function AdminNotificationsPage() {
           </div>
         )}
       </GlassCard>
-
-      <GlassCard className="overflow-hidden">
-        <SectionHeader title="BROADCAST HISTORY" sub="PAST ANNOUNCEMENTS" />
-        {broadcastsLoading ? (
-          <SkeletonRows count={3} height="h-14" />
-        ) : broadcasts.length === 0 ? (
-          <EmptyState
-            icon={<Radio className="h-8 w-8" />}
-            title="No broadcasts sent yet"
-            message="Announcements you send will show up here."
-          />
-        ) : (
-          <AdminTable headers={["Subject", "Recipients", "Sent To", "Date"]}>
-            {broadcasts.map((b) => (
-              <AdminTr key={b.id}>
-                <AdminTd className="font-medium text-white">
-                  {b.subject}
-                  <p className="text-xs text-muted-foreground mt-0.5 font-normal">{b.title}</p>
-                </AdminTd>
-                <AdminTd mono>{b.recipient_count}</AdminTd>
-                <AdminTd>
-                  <div className="flex flex-wrap gap-1.5">
-                    {b.include_customers && (
-                      <span className="px-2 py-0.5 rounded border border-border text-[9px] font-bold uppercase tracking-widest">
-                        Customers
-                      </span>
-                    )}
-                    {b.include_newsletter && (
-                      <span className="px-2 py-0.5 rounded border border-border text-[9px] font-bold uppercase tracking-widest">
-                        Newsletter
-                      </span>
-                    )}
-                  </div>
-                </AdminTd>
-                <AdminTd className="whitespace-nowrap">{formatDateTime(b.created_at)}</AdminTd>
-              </AdminTr>
-            ))}
-          </AdminTable>
-        )}
-      </GlassCard>
-
-      <AdminModal
-        open={broadcastOpen}
-        onClose={closeBroadcastModal}
-        title="SEND BROADCAST"
-      >
-        <div className="p-6 space-y-5 overflow-y-auto">
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              Title
-            </label>
-            <DarkInput
-              value={broadcastTitle}
-              onChange={setBroadcastTitle}
-              placeholder="System Update"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              Subject
-            </label>
-            <DarkInput
-              value={broadcastSubject}
-              onChange={setBroadcastSubject}
-              placeholder="Announcement"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              Message
-            </label>
-            <DarkTextarea
-              value={broadcastMessage}
-              onChange={setBroadcastMessage}
-              placeholder="Enter your message here..."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              Recipients
-            </label>
-            <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Registered customers</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  All non-admin accounts
-                </p>
-              </div>
-              <Switch checked={includeCustomers} onCheckedChange={setIncludeCustomers} />
-            </div>
-            <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Newsletter subscribers</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {subscriberCount === null ? "Loading…" : `${subscriberCount} subscriber${subscriberCount === 1 ? "" : "s"}`}
-                </p>
-              </div>
-              <Switch checked={includeNewsletter} onCheckedChange={setIncludeNewsletter} />
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-[#1a1a1a] flex justify-end gap-4 bg-[#0a0a0a]/50 shrink-0">
-          <button
-            type="button"
-            onClick={closeBroadcastModal}
-            disabled={sending}
-            className="px-6 py-2 rounded-full border border-[#1a1a1a] text-muted-foreground text-[10px] font-bold tracking-widest uppercase hover:bg-[#1a1a1a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            CANCEL
-          </button>
-          <OrangeButton onClick={handleBroadcast} disabled={sending} pill className="px-8">
-            <span className="flex items-center gap-2">
-              <Send className="h-3.5 w-3.5" />
-              {sending ? "SENDING..." : "SEND"}
-            </span>
-          </OrangeButton>
-        </div>
-      </AdminModal>
     </div>
   );
 }
