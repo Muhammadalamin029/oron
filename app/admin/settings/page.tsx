@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { settingsApi } from "@/services/settings"
+import { notificationRulesApi } from "@/services/notification-rules"
 import { AdminPageHeader, GlassCard, SkeletonRows, OrangeButton } from "@/components/admin-ui"
 import { cn } from "@/lib/utils"
 import { getErrorMessage } from "@/lib/get-error-message"
@@ -131,6 +132,13 @@ export default function AdminSettingsPage() {
   })
   const [savingPolicy, setSavingPolicy] = useState<string | null>(null)
 
+  const [notificationRules, setNotificationRules] = useState<
+    Record<string, { notify_customers: boolean; notify_newsletter: boolean }>
+  >({
+    new_product: { notify_customers: true, notify_newsletter: true },
+  })
+  const [savingRules, setSavingRules] = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [savingTab, setSavingTab] = useState<string | null>(null)
   const [initialMap, setInitialMap] = useState<Record<string, string>>({})
@@ -169,12 +177,28 @@ export default function AdminSettingsPage() {
     ;(async () => {
       try {
         setLoading(true)
-        const settings = await settingsApi.getAllSettings()
+        const [settings, rules] = await Promise.all([
+          settingsApi.getAllSettings(),
+          notificationRulesApi.list(),
+        ])
         if (cancelled) return
 
         const map: Record<string, string> = {}
         for (const s of settings) map[s.key] = s.value
         setInitialMap(map)
+
+        if (rules.length > 0) {
+          setNotificationRules((prev) => {
+            const next = { ...prev }
+            for (const r of rules) {
+              next[r.action] = {
+                notify_customers: r.notify_customers,
+                notify_newsletter: r.notify_newsletter,
+              }
+            }
+            return next
+          })
+        }
 
         setStoreSettings((prev) => ({
           ...prev,
@@ -262,6 +286,22 @@ export default function AdminSettingsPage() {
       toast.error(getErrorMessage(error, "Failed to save policy"))
     } finally {
       setSavingPolicy(null)
+    }
+  }
+
+  const saveNotificationRules = async () => {
+    try {
+      setSavingRules(true)
+      await Promise.all(
+        Object.entries(notificationRules).map(([action, rule]) =>
+          notificationRulesApi.update(action, rule)
+        )
+      )
+      toast.success("Notification rules saved")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to save notification rules"))
+    } finally {
+      setSavingRules(false)
     }
   }
 
@@ -355,8 +395,8 @@ export default function AdminSettingsPage() {
           <h3 className="font-display font-bold text-lg text-white mb-2">Notification Settings</h3>
           <div className="divide-y-0">
             <ToggleRow
-              title="Order Notifications"
-              description="Receive email notifications for new orders"
+              title="Notification Master Switch"
+              description="Master switch for all action-based notifications below (e.g. new product alerts to customers and newsletter subscribers). Turning this off silences everything regardless of the rules below."
               checked={storeSettings.enableNotifications}
               onChange={(v) => setStoreSettings((prev) => ({ ...prev, enableNotifications: v }))}
             />
@@ -379,6 +419,40 @@ export default function AdminSettingsPage() {
             >
               {savingTab === "notifications" ? "SAVING..." : "SAVE CHANGES"}
             </OrangeButton>
+          </div>
+
+          <div className="pt-6 mt-2 border-t border-white/5">
+            <h4 className="font-display font-bold text-base text-white mb-1">Action-Based Notification Rules</h4>
+            <p className="text-sm text-[#9a9898] mb-2">Controlled per action. Requires the master switch above to be on.</p>
+            <div className="divide-y-0">
+              <ToggleRow
+                title="New Product Added — Notify Customers"
+                description="Send an in-app + email notification to all registered customers"
+                checked={notificationRules.new_product.notify_customers}
+                onChange={(v) =>
+                  setNotificationRules((prev) => ({
+                    ...prev,
+                    new_product: { ...prev.new_product, notify_customers: v },
+                  }))
+                }
+              />
+              <ToggleRow
+                title="New Product Added — Notify Newsletter Subscribers"
+                description="Email everyone subscribed to the newsletter"
+                checked={notificationRules.new_product.notify_newsletter}
+                onChange={(v) =>
+                  setNotificationRules((prev) => ({
+                    ...prev,
+                    new_product: { ...prev.new_product, notify_newsletter: v },
+                  }))
+                }
+              />
+            </div>
+            <div className="pt-4">
+              <OrangeButton onClick={saveNotificationRules} disabled={savingRules}>
+                {savingRules ? "SAVING..." : "SAVE NOTIFICATION RULES"}
+              </OrangeButton>
+            </div>
           </div>
         </GlassCard>
       )}

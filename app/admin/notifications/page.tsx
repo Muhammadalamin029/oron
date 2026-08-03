@@ -12,6 +12,7 @@ import {
   Headphones,
   Send,
   Radio,
+  ShoppingBag,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { notificationsApi, type BroadcastMessage } from "@/services/notifications";
@@ -41,6 +42,7 @@ const ICONS: Record<string, typeof Bell> = {
   payment: CreditCard,
   dispute: AlertTriangle,
   support: Headphones,
+  product: ShoppingBag,
 };
 
 const ICON_COLORS: Record<string, string> = {
@@ -48,6 +50,7 @@ const ICON_COLORS: Record<string, string> = {
   payment: "bg-green-900/20 text-green-400",
   dispute: "bg-red-900/20 text-red-400",
   support: "bg-amber-900/20 text-amber-400",
+  product: "bg-purple-900/20 text-purple-400",
 };
 
 export default function AdminNotificationsPage() {
