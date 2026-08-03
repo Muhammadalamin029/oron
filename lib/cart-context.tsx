@@ -9,6 +9,7 @@ export interface Watch {
   price: number
   originalPrice?: number
   image: string
+  images: string[]
   category: string
   brand: string
   inStock: boolean

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ImagePlus, Plus, Trash2 } from "lucide-react"
+import { ImagePlus, Plus, Trash2, X } from "lucide-react"
 import { productsApi } from "@/services/products"
 import { categoriesApi } from "@/services/categories"
 import type { Category } from "@/types/api"
@@ -15,6 +15,8 @@ import {
 import Image from "next/image"
 import { getErrorMessage } from "@/lib/get-error-message"
 
+const MAX_IMAGES_PER_PRODUCT = 10
+
 type ProductForm = {
   id: string; // random local id
   name: string;
@@ -22,8 +24,7 @@ type ProductForm = {
   stock: string;
   category_id: string;
   description: string;
-  imageFile: File | null;
-  imagePreview: string;
+  images: string[];
 }
 
 export default function AddProductPage() {
@@ -48,8 +49,7 @@ export default function AddProductPage() {
             stock: "0",
             category_id: cats[0].id,
             description: "",
-            imageFile: null,
-            imagePreview: "",
+            images: [],
           }])
         }
       } catch (err: unknown) {
@@ -61,19 +61,43 @@ export default function AddProductPage() {
     return () => { cancelled = true }
   }, [])
 
-  const handleImageChange = (formId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
+  const readFileAsDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setForms(prev => prev.map(f => 
-          f.id === formId 
-            ? { ...f, imageFile: file, imagePreview: reader.result as string }
-            : f
-        ))
-      }
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
       reader.readAsDataURL(file)
+    })
+
+  const handleImagesChange = async (formId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ""
+    if (files.length === 0) return
+
+    const form = forms.find(f => f.id === formId)
+    const remainingSlots = MAX_IMAGES_PER_PRODUCT - (form?.images.length || 0)
+    if (remainingSlots <= 0) {
+      toast.error(`You can add up to ${MAX_IMAGES_PER_PRODUCT} images per product.`)
+      return
     }
+    if (files.length > remainingSlots) {
+      toast.error(`Only ${remainingSlots} more image(s) can be added to this product.`)
+    }
+
+    const dataUrls = await Promise.all(files.slice(0, remainingSlots).map(readFileAsDataUrl))
+    setForms(prev => prev.map(f =>
+      f.id === formId
+        ? { ...f, images: [...f.images, ...dataUrls] }
+        : f
+    ))
+  }
+
+  const removeImage = (formId: string, index: number) => {
+    setForms(prev => prev.map(f =>
+      f.id === formId
+        ? { ...f, images: f.images.filter((_, i) => i !== index) }
+        : f
+    ))
   }
 
   const handleFormChange = (formId: string, key: keyof ProductForm, value: string) => {
@@ -89,8 +113,7 @@ export default function AddProductPage() {
       stock: "0",
       category_id: defaultCat,
       description: "",
-      imageFile: null,
-      imagePreview: "",
+      images: [],
     }])
   }
 
@@ -109,7 +132,7 @@ export default function AddProductPage() {
           name: form.name,
           description: form.description,
           price: Number(form.price),
-          image_url: form.imagePreview,
+          images: form.images,
           category_id: form.category_id,
           stock: Number(form.stock || 0),
         }
@@ -170,34 +193,49 @@ export default function AddProductPage() {
                 {/* Left Column - Image Upload */}
                 <div className="flex flex-col gap-2">
                   <label className="block text-[10px] font-bold tracking-[0.2em] text-[#9a9898] uppercase">
-                    Product Image
+                    Product Images ({form.images.length}/{MAX_IMAGES_PER_PRODUCT})
                   </label>
-                  <div className="relative group w-full aspect-square bg-[#0a0a0a] border-2 border-dashed border-[#353534] hover:border-[#ff6b00] rounded-xl flex flex-col items-center justify-center transition-all overflow-hidden cursor-pointer">
-                    {form.imagePreview ? (
-                      <>
-                        <Image
-                          src={form.imagePreview}
-                          alt="Preview"
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <p className="text-white text-sm font-bold tracking-wider">CHANGE IMAGE</p>
+
+                  {form.images.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {form.images.map((img, i) => (
+                        <div key={i} className="relative group aspect-square bg-[#0a0a0a] border border-[#353534] rounded-lg overflow-hidden">
+                          <Image src={img} alt={`Preview ${i + 1}`} fill className="object-cover" />
+                          {i === 0 && (
+                            <span className="absolute bottom-1 left-1 bg-[#ff6b00] text-white text-[8px] font-bold tracking-wider px-1.5 py-0.5 rounded">
+                              COVER
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(form.id, i)}
+                            className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
-                      </>
-                    ) : (
+                      ))}
+                    </div>
+                  )}
+
+                  {form.images.length < MAX_IMAGES_PER_PRODUCT && (
+                    <div className="relative group w-full aspect-square bg-[#0a0a0a] border-2 border-dashed border-[#353534] hover:border-[#ff6b00] rounded-xl flex flex-col items-center justify-center transition-all overflow-hidden cursor-pointer">
                       <div className="flex flex-col items-center gap-3 text-[#353534] group-hover:text-[#ff6b00] transition-colors">
                         <ImagePlus className="w-12 h-12" />
-                        <p className="text-xs font-bold tracking-widest uppercase">Click to upload</p>
+                        <p className="text-xs font-bold tracking-widest uppercase">
+                          {form.images.length === 0 ? "Click to upload" : "Add more images"}
+                        </p>
                       </div>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(form.id, e)}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleImagesChange(form.id, e)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Column - Details */}

@@ -31,6 +31,7 @@ export default function ProductDetailPage({
   const { isAuthenticated, user } = useAuth()
   const [quantity, setQuantity] = useState(1)
   const [watch, setWatch] = useState<Watch | null>(null)
+  const [activeImage, setActiveImage] = useState(0)
   const [relatedWatches, setRelatedWatches] = useState<Watch[]>([])
   const [loading, setLoading] = useState(true)
   const [reviews, setReviews] = useState<Review[]>([])
@@ -47,6 +48,7 @@ export default function ProductDetailPage({
         if (cancelled) return
         const mapped = apiProductToWatch(product)
         setWatch(mapped)
+        setActiveImage(0)
         const catName = product.category?.name
         if (catName) {
           const related = await productsApi.getProducts({ category: catName, limit: 5 })
@@ -143,18 +145,28 @@ export default function ProductDetailPage({
           {/* ── Image column ── */}
           <div className="space-y-3">
             <div className="relative aspect-square rounded-lg overflow-hidden bg-[#111111] border border-[#353534]">
-              <Image src={watch.image} alt={watch.name} fill className="object-cover" priority />
+              <Image src={watch.images[activeImage] || watch.image} alt={watch.name} fill className="object-cover" priority />
               {watch.originalPrice && (
                 <span className="absolute top-4 left-4 bg-[#ff6b00] text-white text-[10px] font-bold tracking-wider px-2.5 py-1 rounded">SALE</span>
               )}
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="relative aspect-square rounded-md overflow-hidden bg-[#111111] border border-[#353534] hover:border-[#ff6b00] cursor-pointer transition-colors">
-                  <Image src={watch.image} alt={`${watch.name} view ${i + 1}`} fill className="object-cover" />
-                </div>
-              ))}
-            </div>
+            {watch.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {watch.images.map((img, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveImage(i)}
+                    className={cn(
+                      "relative aspect-square rounded-md overflow-hidden bg-[#111111] border cursor-pointer transition-colors",
+                      i === activeImage ? "border-[#ff6b00]" : "border-[#353534] hover:border-[#ff6b00]"
+                    )}
+                  >
+                    <Image src={img} alt={`${watch.name} view ${i + 1}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ── Detail column ── */}

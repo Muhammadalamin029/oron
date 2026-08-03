@@ -7,12 +7,19 @@ export interface Category {
 }
 
 // Product types
+export interface ProductImage {
+  id: string;
+  image_url: string;
+  position: number;
+}
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
   image_url: string;
+  images: ProductImage[];
   stock: number;
   is_active: boolean;
   category_id: string;
@@ -25,7 +32,8 @@ export interface ProductCreate {
   name: string;
   description: string;
   price: number;
-  image_url: string;
+  image_url?: string;
+  images?: string[];
   category_id: string;
   stock: number;
 }
@@ -35,6 +43,7 @@ export interface ProductUpdate {
   description?: string;
   price?: number;
   image_url?: string;
+  images?: string[];
   category_id?: string;
   stock?: number;
   is_active?: boolean;
