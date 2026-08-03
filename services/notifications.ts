@@ -9,7 +9,6 @@ export interface BroadcastPayload {
   include_newsletter?: boolean;
   custom_recipients?: string[];
   is_html?: boolean;
-  unsubscribe_url?: string | null;
 }
 
 export interface BroadcastMessage {

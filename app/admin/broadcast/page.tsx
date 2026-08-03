@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Mail, Megaphone, Plus, Send, Users } from "lucide-react";
+import { Mail, Megaphone, Plus, Rss, Send, Users } from "lucide-react";
 
 import {
   AdminPageHeader,
@@ -35,7 +35,6 @@ const emptyForm = {
   includeCustomers: false,
   includeNewsletter: false,
   customRecipients: "",
-  unsubscribeUrl: "",
   isHtml: false,
 };
 
@@ -112,7 +111,6 @@ export default function AdminBroadcastPage() {
         include_newsletter: form.includeNewsletter,
         custom_recipients: customRecipients,
         is_html: form.isHtml,
-        unsubscribe_url: form.unsubscribeUrl.trim() || undefined,
       });
       toast.success(`Broadcast sent to ${result.recipient_count} recipient${result.recipient_count === 1 ? "" : "s"}`);
       setForm(emptyForm);
@@ -143,10 +141,15 @@ export default function AdminBroadcastPage() {
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatTile label="Total Sends" value={broadcasts.length} icon={Megaphone} />
         <StatTile label="Customers Included" value={customerSends} icon={Users} />
         <StatTile label="Recipients Reached" value={totalRecipients} icon={Mail} />
+        <StatTile
+          label="Newsletter Subscribers"
+          value={subscriberCount === null ? "—" : subscriberCount}
+          icon={Rss}
+        />
       </div>
 
       <GlassCard className="overflow-hidden">
@@ -268,16 +271,6 @@ export default function AdminBroadcastPage() {
           </div>
 
           <div className="space-y-3 pt-2 border-t border-[#1a1a1a]">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-                Unsubscribe URL (optional)
-              </label>
-              <DarkInput
-                value={form.unsubscribeUrl}
-                onChange={(v) => setForm((p) => ({ ...p, unsubscribeUrl: v }))}
-                placeholder="https://your-site.com/unsubscribe"
-              />
-            </div>
             <div className="flex items-center justify-between bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-4">
               <div>
                 <p className="text-sm font-semibold text-foreground">Send as HTML</p>
@@ -290,6 +283,9 @@ export default function AdminBroadcastPage() {
                 onCheckedChange={(v) => setForm((p) => ({ ...p, isHtml: v }))}
               />
             </div>
+            <p className="text-xs text-muted-foreground">
+              An unsubscribe link is automatically included in every email sent to a recipient.
+            </p>
           </div>
         </div>
 
